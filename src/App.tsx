@@ -1,11 +1,18 @@
-import './App.css';
+import React from 'react';
+import { Provider } from 'react-redux';
+import PersonData from './components/PersonData';
+// import './App.css';
+import 'devextreme/dist/css/dx.common.css';
+import 'devextreme/dist/css/dx.light.css';
+import 'devextreme/dist/css/dx.light.css';
+import { store } from './redux/store';
 
-function App() {
+const App: React.FC = () => {
   return (
-    <div className="App">
-      <h1>123</h1>
-    </div>
+    <Provider store={store}>
+      <PersonData />;
+    </Provider>
   );
-}
+};
 
 export default App;
