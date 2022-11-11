@@ -15,7 +15,7 @@ export type PersonEntityDataType = {
   maritalState: string | undefined;
   citizenship: string | null | undefined;
   nationality: string | null | undefined;
-  comment: string | null | undefined;
+  comment: string | undefined;
   address: string | null | undefined;
   birthPlace: string | null | undefined;
   livePlace: string | null | undefined;

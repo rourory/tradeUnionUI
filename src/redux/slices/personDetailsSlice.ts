@@ -33,7 +33,8 @@ const initialState: PersonEntityType = {
 
 export const fetchByIdData = createAsyncThunk<PersonEntityDataType, number>(
   'personDetails/fetchByIdData',
-  async (id: number) => {
+  async (id: number, { rejectWithValue }) => {
+    let status = 0;
     let response: PersonEntityDataType = {
       id: undefined,
       lastName: '',
@@ -55,8 +56,14 @@ export const fetchByIdData = createAsyncThunk<PersonEntityDataType, number>(
       .then((res) => {
         setTokenToLocalStorage(res.headers.authorization || '');
         response = res.data;
+        status = res.status;
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        console.log(err);
+      });
+    if (status === 0 || (status < 200 && status >= 300)) {
+      return rejectWithValue(response);
+    }
     return response;
   },
 );
@@ -67,6 +74,9 @@ const peopleDetailsSlice = createSlice({
   reducers: {
     setData(state, action: PayloadAction<PersonEntityType>) {
       state.data = action.payload.data;
+    },
+    setFetchStatus(state, action: PayloadAction<FetchingStatus>) {
+      state.fetchStatus = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -119,4 +129,4 @@ const peopleDetailsSlice = createSlice({
 
 export default peopleDetailsSlice.reducer;
 export const personDetailsSelector = (state: RootState) => state.personDetails;
-export const { setData } = peopleDetailsSlice.actions;
+export const { setData, setFetchStatus } = peopleDetailsSlice.actions;
