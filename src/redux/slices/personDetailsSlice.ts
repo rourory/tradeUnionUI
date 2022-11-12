@@ -4,6 +4,7 @@ import {
   FetchingStatus,
   PersonEntityDataType,
   PersonEntityType,
+  initializePersonEntityData,
 } from '../types/person-slice-types';
 import { fetchByIdQuery } from '../utils/queries';
 import { setTokenToLocalStorage } from '../utils/redux-utils';
@@ -11,23 +12,7 @@ import { setTokenToLocalStorage } from '../utils/redux-utils';
 // const defaultValues ={}
 
 const initialState: PersonEntityType = {
-  data: {
-    id: undefined,
-    lastName: '',
-    firstName: '',
-    middleName: '',
-    birthDate: '',
-    education: '',
-    address: '',
-    phone: '',
-    birthPlace: '',
-    livePlace: '',
-    regPlace: '',
-    maritalState: '',
-    citizenship: '',
-    nationality: '',
-    comment: '',
-  },
+  data: initializePersonEntityData(),
   fetchStatus: FetchingStatus.LOADING,
 };
 
@@ -35,23 +20,7 @@ export const fetchByIdData = createAsyncThunk<PersonEntityDataType, number>(
   'personDetails/fetchByIdData',
   async (id: number, { rejectWithValue }) => {
     let status = 0;
-    let response: PersonEntityDataType = {
-      id: undefined,
-      lastName: '',
-      firstName: '',
-      middleName: '',
-      birthDate: '',
-      education: '',
-      address: '',
-      phone: '',
-      birthPlace: '',
-      livePlace: '',
-      regPlace: '',
-      maritalState: '',
-      citizenship: '',
-      nationality: '',
-      comment: '',
-    };
+    let response: PersonEntityDataType = initializePersonEntityData();
     await fetchByIdQuery(`people`, id)
       .then((res) => {
         setTokenToLocalStorage(res.headers.authorization || '');
@@ -81,23 +50,7 @@ const peopleDetailsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase(fetchByIdData.pending, (state, action) => {
-      state.data = {
-        id: undefined,
-        lastName: '',
-        firstName: '',
-        middleName: '',
-        birthDate: '',
-        education: '',
-        address: '',
-        phone: '',
-        birthPlace: '',
-        livePlace: '',
-        regPlace: '',
-        maritalState: '',
-        citizenship: '',
-        nationality: '',
-        comment: '',
-      };
+      state.data = initializePersonEntityData();
       state.fetchStatus = FetchingStatus.LOADING;
     });
     builder.addCase(fetchByIdData.fulfilled, (state, action) => {
@@ -105,23 +58,7 @@ const peopleDetailsSlice = createSlice({
       state.fetchStatus = FetchingStatus.SUCCESS;
     });
     builder.addCase(fetchByIdData.rejected, (state, action) => {
-      state.data = {
-        id: undefined,
-        lastName: '',
-        firstName: '',
-        middleName: '',
-        birthDate: '',
-        education: '',
-        address: '',
-        phone: '',
-        birthPlace: '',
-        livePlace: '',
-        regPlace: '',
-        maritalState: '',
-        citizenship: '',
-        nationality: '',
-        comment: '',
-      };
+      state.data = initializePersonEntityData();
       state.fetchStatus = FetchingStatus.ERROR;
     });
   },

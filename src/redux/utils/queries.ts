@@ -21,3 +21,17 @@ export const fetchByIdQuery = async (table: string, id: number) => {
     headers: { Authorization: 'Bearer ' + token },
   });
 };
+
+export const putQuery = async (table: string, id: number, data: PersonEntityDataType) => {
+  let token: string = '';
+  await getTokenFromLocalStorage()
+    .then((res) => (token = res))
+    .catch((err) => console.log(err));
+  return axios.put<PersonEntityDataType>(
+    LOCAL_HOST + table + '/' + id,
+    { data },
+    {
+      headers: { Authorization: 'Bearer ' + token },
+    },
+  );
+};

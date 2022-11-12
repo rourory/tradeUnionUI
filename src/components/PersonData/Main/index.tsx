@@ -12,6 +12,7 @@ const PersonMainInfo: React.FC<PersonDetailsMainType> = ({ data }) => {
             value={data.education ? data.education : ''}
             placeholder={'Информация отсутствует'}
             readOnly
+            disabled={data.education ? false : true}
           />
         </div>
       </div>
@@ -22,6 +23,7 @@ const PersonMainInfo: React.FC<PersonDetailsMainType> = ({ data }) => {
             value={data.phone ? data.phone : ''}
             placeholder={'Информация отсутствует'}
             readOnly
+            disabled={data.phone ? false : true}
           />
         </div>
       </div>
@@ -32,6 +34,7 @@ const PersonMainInfo: React.FC<PersonDetailsMainType> = ({ data }) => {
             value={data.maritalState ? data.maritalState.toString() : ''}
             placeholder={'Информация отсутствует'}
             readOnly
+            disabled={data.maritalState ? false : true}
           />
         </div>
       </div>
@@ -42,6 +45,7 @@ const PersonMainInfo: React.FC<PersonDetailsMainType> = ({ data }) => {
             value={data.citizenship ? data.citizenship : ''}
             placeholder={'Информация отсутствует'}
             readOnly
+            disabled={data.citizenship ? false : true}
           />
         </div>
       </div>{' '}
@@ -52,6 +56,7 @@ const PersonMainInfo: React.FC<PersonDetailsMainType> = ({ data }) => {
             value={data.nationality ? data.nationality : ''}
             placeholder={'Информация отсутствует'}
             readOnly
+            disabled={data.nationality ? false : true}
           />
         </div>
       </div>

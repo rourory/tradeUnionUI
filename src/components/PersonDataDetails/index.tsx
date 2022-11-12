@@ -22,7 +22,7 @@ const PersonDataDetails: React.FC = (props: any) => {
   React.useEffect(() => {
     setTimeout(() => {
       dispatch(fetchByIdData(id));
-    }, 1000);
+    }, 1500);
   }, []);
 
   const renderAddressComponent = (data: PersonEntityDataType) => {

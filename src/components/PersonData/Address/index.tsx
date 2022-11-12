@@ -12,6 +12,7 @@ const PersonAddress: React.FC<PersonDetailsAddressType> = ({ data }) => {
             value={data.address ? data.address : ''}
             placeholder={'Информация отсутствует'}
             readOnly
+            disabled={data.address ? false : true}
           />
         </div>
       </div>
@@ -22,6 +23,7 @@ const PersonAddress: React.FC<PersonDetailsAddressType> = ({ data }) => {
             value={data.regPlace ? data.regPlace : ''}
             placeholder={'Информация отсутствует'}
             readOnly
+            disabled={data.regPlace ? false : true}
           />
         </div>
       </div>
@@ -32,16 +34,18 @@ const PersonAddress: React.FC<PersonDetailsAddressType> = ({ data }) => {
             value={data.livePlace ? data.livePlace : ''}
             placeholder={'Информация отсутствует'}
             readOnly
+            disabled={data.livePlace ? false : true}
           />
         </div>
       </div>
       <div className="dx-field">
-        <div className="dx-field-label">Место рожд ения</div>
+        <div className="dx-field-label">Место рождения</div>
         <div className="dx-field-value">
           <TextBox
             value={data.birthPlace ? data.birthPlace : ''}
             placeholder={'Информация отсутствует'}
             readOnly
+            disabled={data.birthPlace ? false : true}
           />
         </div>
       </div>

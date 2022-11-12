@@ -10,6 +10,7 @@ const PersonCommentInfo: React.FC<PersonDetailsCommentType> = ({ data }) => {
         value={data.comment}
         placeholder="Информация отсутствует"
         label="Дополнительная информация"
+        disabled={data.comment ? false : true}
       />
     </div>
   );

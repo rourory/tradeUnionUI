@@ -4,7 +4,10 @@ export enum FetchingStatus {
   ERROR = 'error',
 }
 
-export type PersonEntityDataType = {
+interface PObjectKeys {
+  [key: string]: any;
+}
+export interface PersonEntityDataType extends PObjectKeys {
   id: number | undefined;
   lastName: string | undefined;
   firstName: string | undefined;
@@ -20,6 +23,26 @@ export type PersonEntityDataType = {
   birthPlace: string | null | undefined;
   livePlace: string | null | undefined;
   regPlace: string | null | undefined;
+}
+
+export const initializePersonEntityData = (): PersonEntityDataType => {
+  return {
+    id: undefined,
+    lastName: '',
+    firstName: '',
+    middleName: '',
+    birthDate: '',
+    education: '',
+    address: '',
+    phone: '',
+    birthPlace: '',
+    livePlace: '',
+    regPlace: '',
+    maritalState: '',
+    citizenship: '',
+    nationality: '',
+    comment: '',
+  };
 };
 
 export type PersonEntityType = {

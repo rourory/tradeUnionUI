@@ -7,6 +7,7 @@ import DataGrid, {
   Pager,
   MasterDetail,
   Editing,
+  Scrolling,
 } from 'devextreme-react/data-grid';
 import PersonDataDetails from '../PersonDataDetails';
 import DataSource from 'devextreme/data/data_source';
@@ -18,6 +19,8 @@ import React from 'react';
 import { createPeopleStore } from '../../devExpressUtil/createStore';
 import { setFetchStatus } from '../../redux/slices/personDetailsSlice';
 import { FetchingStatus } from '../../redux/types/person-slice-types';
+import CustomLoadingIndicator from '../LoadingIndicator';
+import { LoadPanel } from 'devextreme-react';
 
 const Content = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -37,7 +40,13 @@ const Content = () => {
         allowColumnResizing
         hoverStateEnabled
         onRowExpanding={rowExpanding}
-        showBorders={true}>
+        showBorders={true}
+        loadPanel={{
+          indicatorSrc: '/Rolling-1.5s-200px.svg',
+          showPane: false,
+          text: 'Загрузка данных...',
+        }}
+        height={650}>
         <Editing
           mode="row"
           allowUpdating={true}
@@ -65,7 +74,7 @@ const Content = () => {
         <FilterRow visible={true} />
         <GroupPanel emptyPanelText="Переместите сюда колонки для группировки" visible={true} />
         <MasterDetail enabled={true} component={PersonDataDetails} />
-        <Paging defaultPageSize={10} />
+        {/* <Paging defaultPageSize={10} />
         <Pager
           visible={true}
           allowedPageSizes={[5, 10, 15, 20]}
@@ -73,7 +82,8 @@ const Content = () => {
           showPageSizeSelector={true}
           showInfo={true}
           showNavigationButtons={true}
-        />
+        /> */}
+        <Scrolling mode="virtual" />
       </DataGrid>
     </>
   );
