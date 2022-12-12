@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { LOCAL_HOST } from '../../host';
+import { LOCAL_HOST } from '../../URLs';
 
 export const temporaryAuthenticate = async () => {
   let token: string = '';
