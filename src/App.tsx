@@ -13,6 +13,7 @@ import SignInSide from './components/SignIn';
 import SignUp from './components/SignUp';
 import { userSelector } from './redux/slices/user-slice';
 import { useSelector } from 'react-redux';
+import '@coreui/coreui/dist/css/coreui.min.css';
 
 const App: React.FC = () => {
   const { user } = useSelector(userSelector);

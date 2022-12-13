@@ -1,5 +1,4 @@
 import * as React from 'react';
-import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
@@ -8,10 +7,12 @@ import Checkbox from '@mui/material/Checkbox';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Link } from 'react-router-dom';
+import Logo from '../Logo';
+import AppLink from '../Link';
+import { CCarousel, CCarouselItem, CImage } from '@coreui/react';
 
 function Copyright(props: any) {
   return (
@@ -39,21 +40,20 @@ export default function SignInSide() {
     <ThemeProvider theme={theme}>
       <Grid container component="main" sx={{ height: '100vh' }}>
         <CssBaseline />
-        <Grid
-          item
-          xs={false}
-          sm={4}
-          md={7}
-          sx={{
-            backgroundImage: 'url(https://source.unsplash.com/random)',
-            backgroundRepeat: 'no-repeat',
-            backgroundColor: (t: any) =>
-              t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
-        <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
+        <Grid item xs={false} sm={false} md={7}>
+          <CCarousel controls indicators transition="crossfade" interval={2000}>
+            <CCarouselItem key="item1">
+              <CImage className="d-block w-100" src="/img/cover1.png" alt="slide 1" key="slide1" />
+            </CCarouselItem>
+            <CCarouselItem key="item2">
+              <CImage className="d-block w-100" src="/img/cover2.png" alt="slide 2" key="slide2" />
+            </CCarouselItem>
+            <CCarouselItem key="item3">
+              <CImage className="d-block w-100" src="/img/cover3.png" alt="slide 3" key="slide3" />
+            </CCarouselItem>
+          </CCarousel>
+        </Grid>
+        <Grid item xs={12} sm={false} md={5} component={Paper} elevation={6} square>
           <Box
             sx={{
               my: 8,
@@ -62,11 +62,9 @@ export default function SignInSide() {
               flexDirection: 'column',
               alignItems: 'center',
             }}>
-            <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-              <LockOutlinedIcon />
-            </Avatar>
-            <Typography component="h1" variant="h5">
-              Sign in
+            <Logo height={130} />
+            <Typography component="h1" variant="h4">
+              Авторизация
             </Typography>
             <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1 }}>
               <Grid item xs={12}>
@@ -75,7 +73,7 @@ export default function SignInSide() {
                   required
                   fullWidth
                   id="username"
-                  label="Username"
+                  label="Имя пользователя"
                   name="userName"
                   autoComplete="user-name"
                   autoFocus
@@ -86,24 +84,29 @@ export default function SignInSide() {
                 required
                 fullWidth
                 name="password"
-                label="Password"
+                label="Пароль"
                 type="password"
                 id="password"
                 autoComplete="current-password"
               />
               <FormControlLabel
                 control={<Checkbox value="remember" color="primary" />}
-                label="Remember me"
+                label="Запомнить меня"
               />
               <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-                Sign In
+                Войти
               </Button>
               <Grid container>
                 <Grid item xs>
-                  <Link to="#">Забыли пароль?</Link>
+                  <AppLink to="#" color="inherit" fontSize="14px" text="Забыли пароль?"></AppLink>
                 </Grid>
                 <Grid item>
-                  <Link to="/register">У вас еще нет аккаунта? Зарегестрируйтесь!</Link>
+                  <AppLink
+                    to="/register"
+                    color="inherit"
+                    fontSize="14px"
+                    text="У вас еще нет аккаунта? Зарегестрируйтесь!"
+                  />
                 </Grid>
               </Grid>
               <Copyright sx={{ mt: 5 }} />

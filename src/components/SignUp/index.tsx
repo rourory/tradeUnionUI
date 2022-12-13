@@ -10,6 +10,8 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Link } from 'react-router-dom';
+import Logo from '../Logo';
+import AppLink from '../Link';
 
 function Copyright(props: any) {
   return (
@@ -44,11 +46,9 @@ export default function SignUp() {
             flexDirection: 'column',
             alignItems: 'center',
           }}>
-          <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-            <LockOutlinedIcon />
-          </Avatar>
-          <Typography component="h1" variant="h5">
-            Sign up
+          <Logo height={170} />
+          <Typography component="h1" variant="h4">
+            Регистрация
           </Typography>
           <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
             <Grid container spacing={2}>
@@ -59,7 +59,7 @@ export default function SignUp() {
                   required
                   fullWidth
                   id="firstName"
-                  label="First Name"
+                  label="Имя"
                   autoFocus
                 />
               </Grid>
@@ -68,7 +68,7 @@ export default function SignUp() {
                   required
                   fullWidth
                   id="lastName"
-                  label="Last Name"
+                  label="Фамилия"
                   name="lastName"
                   autoComplete="family-name"
                 />
@@ -78,45 +78,34 @@ export default function SignUp() {
                   required
                   fullWidth
                   id="username"
-                  label="Username"
+                  label="Имя пользователя"
                   name="userName"
                   autoComplete="user-name"
                 />
               </Grid>
-              {/* <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  id="email"
-                  label="Email Address"
-                  name="email"
-                  autoComplete="email"
-                />
-              </Grid> */}
               <Grid item xs={12}>
                 <TextField
                   required
                   fullWidth
                   name="password"
-                  label="Password"
+                  label="Пароль"
                   type="password"
                   id="password"
                   autoComplete="new-password"
                 />
               </Grid>
-              {/* <Grid item xs={12}>
-                <FormControlLabel
-                  control={<Checkbox value="allowExtraEmails" color="primary" />}
-                  label="I want to receive inspiration, marketing promotions and updates via email."
-                />
-              </Grid> */}
             </Grid>
             <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-              Sign Up
+              Отправить
             </Button>
             <Grid container justifyContent="flex-end">
               <Grid item>
-                <Link to="/login">Уже есть аккаунт? Войдите!</Link>
+                <AppLink
+                  to="/login"
+                  color="inherit"
+                  fontSize="14px"
+                  text="Уже есть аккаунт? Войдите!"
+                />
               </Grid>
             </Grid>
           </Box>
