@@ -1,8 +1,8 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { RootState } from "../store";
-import { ClassificationsType, ClassType } from "../types/classification-slice-types";
-import { fetchQuery } from "../utils/queries";
-import { setTokenToLocalStorage } from "../utils/redux-utils";
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { RootState } from '../store';
+import { ClassificationsType, ClassType } from '../types/classification-slice-types';
+import { fetchQuery } from '../utils/queries';
+import { setTokenToLocalStorage } from '../utils/redux-utils';
 
 const initialState: ClassificationsType = {
   education: [],
@@ -11,9 +11,9 @@ const initialState: ClassificationsType = {
 };
 
 type ReturnedData = {
-  educations: ClassType[]
-  maritalStates: ClassType[]
-}
+  educations: ClassType[];
+  maritalStates: ClassType[];
+};
 
 export const fetchClassificationsData = createAsyncThunk<ReturnedData>(
   'fetchClassificationsData/classificationsSlice',
@@ -36,6 +36,7 @@ export const fetchClassificationsData = createAsyncThunk<ReturnedData>(
     let maritalStates: any = [];
     await fetchQuery<ClassType>(`marital_states`)
       .then((res) => {
+        console.log('marital: ', res);
         setTokenToLocalStorage(res.headers.authorization || '');
         maritalStates = res.data;
         status = res.status;
@@ -47,17 +48,16 @@ export const fetchClassificationsData = createAsyncThunk<ReturnedData>(
       return rejectWithValue(maritalStates);
     }
 
-    return { educations, maritalStates }
+    return { educations, maritalStates };
   },
 );
-
 
 const classificationsSlice = createSlice({
   name: 'classifications',
   initialState,
   reducers: {
     setEducations(state, action: PayloadAction<ClassType[]>) {
-      state.education = action.payload
+      state.education = action.payload;
     },
     setMaritalStates(state, action: PayloadAction<ClassType[]>) {
       state.maritalState = action.payload;
@@ -72,8 +72,8 @@ const classificationsSlice = createSlice({
       state.maritalState = [];
     });
     builder.addCase(fetchClassificationsData.fulfilled, (state, action) => {
-      state.education = action.payload.educations
-      state.maritalState = action.payload.maritalStates
+      state.education = action.payload.educations;
+      state.maritalState = action.payload.maritalStates;
     });
     builder.addCase(fetchClassificationsData.rejected, (state, action) => {
       state.education = [];

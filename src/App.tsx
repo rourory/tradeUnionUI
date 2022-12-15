@@ -6,13 +6,13 @@ import PersonData from './components/DataGrids/PersonData';
 import NotFound from './components/NotFound';
 import TradeUnionData from './components/DataGrids/TradeUnionData';
 import About from './components/About';
-import 'devextreme/dist/css/dx.common.css';
-import 'devextreme/dist/css/dx.light.css';
-import 'devextreme/dist/css/dx.light.css';
 import SignInSide from './components/SignIn';
 import SignUp from './components/SignUp';
 import { userSelector } from './redux/slices/user-slice';
 import { useSelector } from 'react-redux';
+import 'devextreme/dist/css/dx.common.css';
+import 'devextreme/dist/css/dx.light.css';
+import 'devextreme/dist/css/dx.light.css';
 import '@coreui/coreui/dist/css/coreui.min.css';
 
 const App: React.FC = () => {

@@ -1,9 +1,10 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { FetchingStatus } from "../../@types/fetchingStatus";
-import { RootState } from "../store";
-import { Cridentials, User, UserEntity } from "../types/user-slice-types";
-import { signInQuery } from "../utils/queries";
-import { setTokenToLocalStorage } from "../utils/redux-utils";
+import { UserData, UserDataResponce } from './../types/user-slice-types';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { FetchingStatus } from '../../@types/fetchingStatus';
+import { RootState } from '../store';
+import { Cridentials, User } from '../types/user-slice-types';
+import { signInQuery } from '../utils/queries';
+import { setTokenToLocalStorage } from '../utils/redux-utils';
 
 const initialState: User = {
   user: undefined,
@@ -11,37 +12,39 @@ const initialState: User = {
   errorMessage: '',
 };
 
-
-export const signIn = createAsyncThunk<UserEntity, Cridentials>(
+export const signIn = createAsyncThunk<UserDataResponce, Cridentials>(
   'user/SignIn',
   async ({ username, password }, { rejectWithValue }) => {
     let status = 0;
     let response: any = [];
-    await signInQuery<UserEntity>({ username, password }).then((res) => {
-      setTokenToLocalStorage(res.data.token || '');
-      response = res.data;
-      status = res.status;
-    }).catch((err) => {
-      console.log(err)
-    })
-
-    if (status === 0 || status === 203) {
-      return rejectWithValue(response as string);
-    }
+    await signInQuery({ username, password })
+      .then((res) => {
+        console.log('DATA AFTER SIGN IN: ', res);
+        status = res.status;
+        if (status === 0 || status === 203) {
+          return rejectWithValue(response as string);
+        } else {
+          setTokenToLocalStorage(res.data.jwt_token);
+          response = res.data;
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
     return response;
-  }
+  },
 );
 
 const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    setUser(state, action: PayloadAction<UserEntity>) {
+    setUser(state, action: PayloadAction<UserData | undefined>) {
       state.user = action.payload;
     },
     setFetchStatus(state, action: PayloadAction<FetchingStatus>) {
-      state.fetchStatus = action.payload
-    }
+      state.fetchStatus = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(signIn.pending, (state, action) => {
@@ -50,9 +53,8 @@ const userSlice = createSlice({
       state.fetchStatus = FetchingStatus.LOADING;
     });
     builder.addCase(signIn.fulfilled, (state, action) => {
-      state.user = action.payload;
+      state.user = action.payload.user;
       state.errorMessage = '';
-      setTokenToLocalStorage(action.payload.token)
       state.fetchStatus = FetchingStatus.SUCCESS;
     });
     builder.addCase(signIn.rejected, (state, action) => {

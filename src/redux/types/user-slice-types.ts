@@ -1,24 +1,31 @@
-import { FetchingStatus } from "../../@types/fetchingStatus"
+import { FetchingStatus } from '../../@types/fetchingStatus';
+
+export type UserDataResponce = {
+  user: UserData;
+  jwt_token: string;
+};
 
 export type UserData = {
-  username: string | undefined,
-  firstName: string | undefined,
-  lastName: string | undefined,
-  role: string | undefined,
-}
-
-export type UserEntity = {
-  token: string,
-  data: UserData,
-}
+  username: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+};
 
 export type User = {
-  user: UserEntity | undefined,
-  fetchStatus: FetchingStatus,
-  errorMessage: string,
-}
+  user: UserData | undefined;
+  fetchStatus: FetchingStatus;
+  errorMessage: string;
+};
 
 export type Cridentials = {
-  username: string,
-  password: string,
-}
+  username: string;
+  password: string;
+};
+
+export type UserRegistrationData = {
+  username: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+};

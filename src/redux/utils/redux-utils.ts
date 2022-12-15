@@ -1,8 +1,7 @@
-
 export const setTokenToLocalStorage = (token: string): void => {
-  localStorage.setItem('trade-union-auth-token', token);
+  localStorage.setItem('trade_union_auth_token', token);
 };
 
 export const getTokenFromLocalStorage = (): string | undefined => {
-  return localStorage.getItem('trade-union-auth-token')?.substring(7);
+  return localStorage.getItem('trade_union_auth_token')?.substring(7) || '';
 };

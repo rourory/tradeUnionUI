@@ -1,3 +1,8 @@
+.appLink p {
+  transition: ease-in-out;
+  transition-duration: 300ms;
+}
+
 .appLink:hover p {
   scale: 105%;
 }

@@ -1,17 +1,22 @@
 import * as React from 'react';
-import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Link } from 'react-router-dom';
 import Logo from '../Logo';
 import AppLink from '../Link';
+import { signUp } from '../../redux/utils/queries';
+import { UserData, UserRegistrationData } from '../../redux/types/user-slice-types';
+import { setUser } from '../../redux/slices/user-slice';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '../../redux/store';
+import { Violations } from '../../@types/globalTypes';
+import { signIn } from '../../redux/slices/user-slice';
 
 function Copyright(props: any) {
   return (
@@ -26,13 +31,29 @@ function Copyright(props: any) {
 const theme = createTheme();
 
 export default function SignUp() {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const dispatch = useDispatch<AppDispatch>();
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+    const userData: UserRegistrationData = {
+      username: data.get('username')?.toString() || '',
+      password: data.get('password')?.toString() || '',
+      firstName: data.get('firstname')?.toString() || '',
+      lastName: data.get('lastname')?.toString() || '',
+    };
+    await signUp(userData)
+      .then((res) => {
+        if (res.status === 200) {
+          const returnedUserData = res.data as UserData;
+          dispatch(signIn({ username: returnedUserData.username, password: userData.password }));
+        } else {
+          console.log('ERROR', res.data as Violations);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   return (
@@ -55,10 +76,10 @@ export default function SignUp() {
               <Grid item xs={12} sm={6}>
                 <TextField
                   autoComplete="given-name"
-                  name="firstName"
+                  name="firstname"
                   required
                   fullWidth
-                  id="firstName"
+                  id="firstname"
                   label="Имя"
                   autoFocus
                 />
@@ -67,9 +88,9 @@ export default function SignUp() {
                 <TextField
                   required
                   fullWidth
-                  id="lastName"
+                  id="lastname"
                   label="Фамилия"
-                  name="lastName"
+                  name="lastname"
                   autoComplete="family-name"
                 />
               </Grid>
@@ -79,7 +100,7 @@ export default function SignUp() {
                   fullWidth
                   id="username"
                   label="Имя пользователя"
-                  name="userName"
+                  name="username"
                   autoComplete="user-name"
                 />
               </Grid>
@@ -102,9 +123,9 @@ export default function SignUp() {
               <Grid item>
                 <AppLink
                   to="/login"
-                  color="inherit"
+                  color="blue"
                   fontSize="14px"
-                  text="Уже есть аккаунт? Войдите!"
+                  text="Уже есть аккаунт ? Войдите!"
                 />
               </Grid>
             </Grid>

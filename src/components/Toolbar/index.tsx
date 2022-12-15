@@ -16,6 +16,7 @@ import { AppDispatch } from '../../redux/store';
 import { useDispatch } from 'react-redux';
 import { setOpened } from '../../redux/slices/drawer-slice';
 import { Divider } from '@mui/material';
+import { setUser } from '../../redux/slices/user-slice';
 
 const pages = ['PageOne', 'PageTwo', 'PageThree'];
 const settings = ['Profile', 'Account', 'Dashboard'];
@@ -34,6 +35,11 @@ const ResponsiveAppBar = () => {
   };
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
+  };
+
+  const logout = () => {
+    dispatch(setUser(undefined));
+    localStorage.removeItem('trade_union_auth_token');
   };
 
   return (
@@ -126,7 +132,9 @@ const ResponsiveAppBar = () => {
                 ))}
                 <Divider />
                 <MenuItem key={'exit'} onClick={handleCloseUserMenu}>
-                  <Typography textAlign="center">Выйти</Typography>
+                  <Typography textAlign="center" onClick={() => logout()}>
+                    Выйти
+                  </Typography>
                 </MenuItem>
               </Menu>
             </Box>

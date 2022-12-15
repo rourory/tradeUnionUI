@@ -101,7 +101,6 @@ const PersonData: React.FC = () => {
       </DataGrid>
       <PersonEditForm
         onUpdatingSuccess={() => {
-          console.log('SUCCESS');
           rows.reload();
         }}
       />
