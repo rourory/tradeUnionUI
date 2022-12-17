@@ -1,5 +1,5 @@
-import { FetchingStatus } from "../../@types/fetchingStatus";
-import { PersonEntityDataType } from "../../@types/personTypes";
+import { FetchingStatus } from '../../@types/fetchingStatus';
+import { PersonEntityDataType } from '../../@types/personTypes';
 
 export type EditPersonFormType = {
   opened: boolean;
@@ -10,8 +10,7 @@ export type EditPersonFormType = {
   fetchStatus: FetchingStatus;
 };
 
-
-export type UpdateDataField = {
+export type UpdatePersonFormTypeDataField = {
   fieldName: keyof PersonEntityDataType;
   value: any;
-}
+};

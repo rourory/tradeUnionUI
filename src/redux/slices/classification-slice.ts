@@ -36,7 +36,6 @@ export const fetchClassificationsData = createAsyncThunk<ReturnedData>(
     let maritalStates: any = [];
     await fetchQuery<ClassType>(`marital_states`)
       .then((res) => {
-        console.log('marital: ', res);
         setTokenToLocalStorage(res.headers.authorization || '');
         maritalStates = res.data;
         status = res.status;

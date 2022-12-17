@@ -1,10 +1,13 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { FetchingStatus } from "../../@types/fetchingStatus";
-import { initializePersonEntityData, PersonEntityDataType } from "../../@types/personTypes";
-import { RootState } from "../store";
-import { EditPersonFormType, UpdateDataField } from "../types/edit-person-form-slice-types";
-import { fetchByIdQuery } from "../utils/queries";
-import { setTokenToLocalStorage } from "../utils/redux-utils";
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { FetchingStatus } from '../../@types/fetchingStatus';
+import { initializePersonEntityData, PersonEntityDataType } from '../../@types/personTypes';
+import { RootState } from '../store';
+import {
+  EditPersonFormType,
+  UpdatePersonFormTypeDataField,
+} from '../types/edit-person-form-slice-types';
+import { fetchByIdQuery } from '../utils/queries';
+import { setTokenToLocalStorage } from '../utils/redux-utils';
 
 const initialState: EditPersonFormType = {
   opened: false,
@@ -14,7 +17,6 @@ const initialState: EditPersonFormType = {
   editPersonDataDiffers: false,
   fetchStatus: FetchingStatus.LOADING,
 };
-
 
 export const fetchByIdData = createAsyncThunk<PersonEntityDataType, number>(
   'editPersonForm/fetchByIdData',
@@ -39,12 +41,14 @@ export const fetchByIdData = createAsyncThunk<PersonEntityDataType, number>(
 
 const areDataObjectsEqual = (data: PersonEntityDataType, changedData: PersonEntityDataType) => {
   for (const key in data) {
-    if (data[key as keyof PersonEntityDataType] !== changedData[key as keyof PersonEntityDataType]) {
+    if (
+      data[key as keyof PersonEntityDataType] !== changedData[key as keyof PersonEntityDataType]
+    ) {
       return false;
     }
   }
   return true;
-}
+};
 
 const editPersonFormSlice = createSlice({
   name: 'editPersonForm',
@@ -59,20 +63,20 @@ const editPersonFormSlice = createSlice({
     setPersonEditFormFetchStatus(state, action: PayloadAction<FetchingStatus>) {
       state.fetchStatus = action.payload;
     },
-    setData(state, action: PayloadAction<UpdateDataField>) {
-      state.editPersonDataDiffers = false
+    setData(state, action: PayloadAction<UpdatePersonFormTypeDataField>) {
+      state.editPersonDataDiffers = false;
       for (const key in state.data) {
         if (key === action.payload.fieldName) {
-          state.data[key as keyof PersonEntityDataType] = action.payload.value
+          state.data[key as keyof PersonEntityDataType] = action.payload.value;
         }
       }
       state.editPersonDataDiffers = !areDataObjectsEqual(state.data, state.changedData);
     },
     setDataEqualsChangedData(state, action: PayloadAction<PersonEntityDataType>) {
-      state.data = action.payload
-      state.changedData = action.payload
-      state.editPersonDataDiffers = false
-    }
+      state.data = action.payload;
+      state.changedData = action.payload;
+      state.editPersonDataDiffers = false;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchByIdData.pending, (state, action) => {
