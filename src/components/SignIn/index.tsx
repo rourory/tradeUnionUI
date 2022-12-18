@@ -9,7 +9,6 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { Link } from 'react-router-dom';
 import Logo from '../Logo';
 import AppLink from '../Link';
 import { CCarousel, CCarouselItem, CImage } from '@coreui/react';
@@ -17,16 +16,7 @@ import { Cridentials } from '../../redux/types/user-slice-types';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../../redux/store';
 import { signIn } from '../../redux/slices/user-slice';
-
-function Copyright(props: any) {
-  return (
-    <Typography variant="body2" color="text.secondary" align="center" {...props}>
-      {'Copyright © '}
-      <Link to="http://localhost:3000/">Trade Unions</Link> {new Date().getFullYear()}
-      {'.'}
-    </Typography>
-  );
-}
+import Copyright from '../SignUp/Copyright';
 
 const renderCarousel = () => {
   return (
@@ -132,7 +122,7 @@ export default function SignInSide() {
                   />
                 </Grid>
               </Grid>
-              <Copyright sx={{ mt: 5 }} />
+              <Copyright />
             </Box>
           </Box>
         </Grid>

@@ -1,18 +1,29 @@
 import * as React from 'react';
-import Button from '@mui/material/Button';
-import CssBaseline from '@mui/material/CssBaseline';
-import TextField from '@mui/material/TextField';
-import Grid from '@mui/material/Grid';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Container from '@mui/material/Container';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  CssBaseline,
+  TextField,
+  Grid,
+  Box,
+  Typography,
+  Container,
+  createTheme,
+  ThemeProvider,
+} from '@mui/material';
+import { LoadingButton } from '@mui/lab';
 import Logo from '../Logo';
 import AppLink from '../Link';
+import Notificator from '../Notificator';
+import OperationResultDialog from '../EditForms/OprerationResult';
+import { ErrorWithMessage, Violations } from '../../@types/globalTypes';
+import { FetchingStatus } from '../../@types/fetchingStatus';
+import { SignUpFormFields } from '../../redux/types/localStatesTypes/signUp-form-slice-types';
 import { UserData, UserRegistrationData } from '../../redux/types/user-slice-types';
-import { useDispatch, useSelector } from 'react-redux';
+import { formatNameToRightTemplate } from '../../redux/utils/stringOperations';
+import { signUp } from '../../redux/utils/queries';
 import { AppDispatch } from '../../redux/store';
+import { signIn } from '../../redux/slices/user-slice';
 import {
   signUpFormFieldSelector,
   signUpFormErrorsSelector,
@@ -21,23 +32,18 @@ import {
   setFetchingStatus,
   signUpFormSelector,
 } from '../../redux/slices/localStates/signUp-slice';
-import { formatNameToRightTemplate } from '../../redux/utils/stringOperations';
-import { SignUpFormFields } from '../../redux/types/localStatesTypes/signUp-form-slice-types';
-import { Violations } from '../../@types/globalTypes';
-import { signIn } from '../../redux/slices/user-slice';
-import { signUp } from '../../redux/utils/queries';
-import { LoadingButton } from '@mui/lab';
-import { FetchingStatus } from '../../@types/fetchingStatus';
-
-function Copyright(props: any) {
-  return (
-    <Typography variant="body2" color="text.secondary" align="center" {...props}>
-      {'Copyright © '}
-      <Link to="http://localhost:3000/">Trade Unions</Link> {new Date().getFullYear()}
-      {'.'}
-    </Typography>
-  );
-}
+import {
+  notificatorContentSelector,
+  notificatorSelector,
+  setDialogContent,
+  setNotificatorOpenedState,
+} from '../../redux/slices/notificator-slice';
+import {
+  setOpenedOperationResultDialog,
+  setOperationResultFetchStatus,
+  setViolation,
+} from '../../redux/slices/operation-result-slice';
+import Copyright from './Copyright';
 
 const theme = createTheme();
 
@@ -46,8 +52,17 @@ export default function SignUp() {
   const { lastName, firstName, username, password } = useSelector(signUpFormFieldSelector);
   const { firstNameError, lastNameError, usernameError, passwordError } =
     useSelector(signUpFormErrorsSelector);
-  const { fetchStatus } = useSelector(signUpFormSelector);
+  const { signUpFetchStatus } = useSelector(signUpFormSelector);
+  const { notificatorIsOpened: errorNotificatorIsOpened } = useSelector(notificatorSelector);
+  const { dialogTitle, dialogContentText } = useSelector(notificatorContentSelector);
 
+  /**
+   * Метод слушает изменяемые поля в форме
+   * @param changedField - имя изменяемого поля
+   * @param changedValue - изменяемое значение
+   * @param format - флаг, регулирующий необходимость форматирования значения методом {@method formatNameToRightTemplate}
+   * @returns void
+   */
   const handleChange = (changedField: string, changedValue: any, format = false) => {
     return dispatch(
       setFieldByName({
@@ -57,6 +72,86 @@ export default function SignUp() {
     );
   };
 
+  /**
+   * Метод занимается обратокой события React.FocusEvent генерируемого тестовыми полями в методе onBlur
+   * @param event - событие React.FocusEvent
+   * @param value - значение поля для обработки
+   * @param needToChange - флаг, определяющий необходимость обработки форматируемого значения. Если значение не нужно форматировать методом {@method formatNameToRightTemplate}, необходимо передать в метод false соответствующим параметром.
+   */
+  const handleBlur = (
+    event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement, Element>,
+    value: string,
+    needToChange = true,
+  ) => {
+    if (needToChange) handleChange(event.target.name, event.target.value, true);
+    dispatch(
+      validateFieldByName({
+        fieldName: event.target.name as keyof SignUpFormFields,
+        value: needToChange ? formatNameToRightTemplate(value) : value,
+      }),
+    );
+  };
+
+  /**
+   * Метод занимается сокрытием компонента ErrorNotification
+   */
+  const handleErrorNotificatorClose = () => {
+    dispatch(setNotificatorOpenedState(false));
+  };
+
+  /**
+   * Метод занимается обработкой ошибок (кроме ошибок валидации на сервере) при отправке формы для регистрации.
+   * Вызывает отображение компонента ErrorNoificator и его содержимым.
+   * @param error строка или объект с информацией об ошибке
+   */
+  const unknownError = (error: any) => {
+    dispatch(setFetchingStatus(FetchingStatus.ERROR));
+    dispatch(
+      setDialogContent({
+        dialogTitle: 'Ошибка',
+        dialogContentText: `Непредвиденная ошибка на сервере (${error})`,
+      }),
+    );
+    dispatch(setNotificatorOpenedState(true));
+  };
+
+  /**
+   * Метод занимается обработкой ошиьок валидации на сервере при отправке формы регистрации.
+   * Вызывает отбражение компоненте OperationResult с его содержимым
+   * @param violations объекта типа Viloations содержащии информацию об ошибках валидации на сервере
+   */
+  const serverValidationError = (violations: Violations) => {
+    dispatch(setFetchingStatus(FetchingStatus.ERROR));
+    dispatch(setOperationResultFetchStatus(FetchingStatus.VALIDATION_ERROR));
+    dispatch(setOpenedOperationResultDialog(true));
+    dispatch(setViolation(violations));
+  };
+
+  /**
+   * Метод занимается обработкой успешного сценария регистрации пользователя.
+   * @param username - имя пользователя
+   * @param password - пароль пользователя
+   */
+  const successRegistration = (username: string, password: string) => {
+    dispatch(setFetchingStatus(FetchingStatus.SUCCESS));
+    dispatch(
+      setDialogContent({
+        dialogTitle: 'Поздравляем',
+        dialogContentText:
+          'Вы успешно зарегестрировались на сайте. Вы будуте автоматически перенапрвлены на главную страницу через пару секунд.',
+      }),
+    );
+    dispatch(setNotificatorOpenedState(true));
+    setTimeout(() => {
+      dispatch(setNotificatorOpenedState(false));
+      dispatch(signIn({ username: username, password: password }));
+    }, 4000);
+  };
+
+  /**
+   * Метод занимается отправкой формы для регистрации
+   * @param event - событие, вызваемое командой submit. Создержит данные формы
+   */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     dispatch(setFetchingStatus(FetchingStatus.LOADING));
     event.preventDefault();
@@ -67,20 +162,26 @@ export default function SignUp() {
       firstName: data.get('firstName')?.toString() || '',
       lastName: data.get('lastName')?.toString() || '',
     };
+
     await signUp(userData)
       .then((res) => {
         if (res.status === 200) {
-          const returnedUserData = res.data as UserData;
-          dispatch(setFetchingStatus(FetchingStatus.SUCCESS));
-          dispatch(signIn({ username: returnedUserData.username, password: userData.password }));
-        } else {
+          const returnedData = res.data as UserData;
+          successRegistration(returnedData.username, userData.password);
+        } else if (res.status === 208) {
+          //Пользователь с таким именем уже существует
+          const { message } = res.data as ErrorWithMessage;
           dispatch(setFetchingStatus(FetchingStatus.ERROR));
-          console.log('ERROR', res.data as Violations);
+          dispatch(setDialogContent({ dialogTitle: 'Ошибка', dialogContentText: message }));
+          dispatch(setNotificatorOpenedState(true));
+        } else if (res.status === 203) {
+          serverValidationError(res.data as Violations);
+        } else {
+          unknownError('');
         }
       })
       .catch((err) => {
-        dispatch(setFetchingStatus(FetchingStatus.ERROR));
-        console.log(err);
+        unknownError(err);
       });
   };
 
@@ -114,17 +215,9 @@ export default function SignUp() {
                   label="Имя"
                   autoFocus
                   onBlur={(event) => {
-                    firstName !== '' &&
-                      firstName &&
-                      handleChange(event.target.name, event.target.value, true) &&
-                      dispatch(
-                        validateFieldByName({
-                          fieldName: event.target.name as keyof SignUpFormFields,
-                          value: event.target.value,
-                        }),
-                      );
+                    firstName !== '' && firstName && handleBlur(event, firstName);
                   }}
-                  onChange={(event) => handleChange(event.target.name, event.target.value, true)}
+                  onChange={(event) => handleChange(event.target.name, event.target.value)}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -139,17 +232,9 @@ export default function SignUp() {
                   name="lastName"
                   autoComplete="family-name"
                   onBlur={(event) => {
-                    lastName !== '' &&
-                      lastName &&
-                      handleChange(event.target.name, event.target.value, true) &&
-                      dispatch(
-                        validateFieldByName({
-                          fieldName: event.target.name as keyof SignUpFormFields,
-                          value: event.target.value,
-                        }),
-                      );
+                    lastName !== '' && lastName && handleBlur(event, lastName);
                   }}
-                  onChange={(event) => handleChange(event.target.name, event.target.value, true)}
+                  onChange={(event) => handleChange(event.target.name, event.target.value)}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -164,14 +249,7 @@ export default function SignUp() {
                   name="username"
                   autoComplete="user-name"
                   onBlur={(event) =>
-                    username !== '' &&
-                    username &&
-                    dispatch(
-                      validateFieldByName({
-                        fieldName: event.target.name as keyof SignUpFormFields,
-                        value: event.target.value,
-                      }),
-                    )
+                    username !== '' && username && handleBlur(event, username, false)
                   }
                   onChange={(event) => handleChange(event.target.name, event.target.value)}
                 />
@@ -189,22 +267,15 @@ export default function SignUp() {
                   id="password"
                   autoComplete="new-password"
                   onBlur={(event) =>
-                    password !== '' &&
-                    password &&
-                    dispatch(
-                      validateFieldByName({
-                        fieldName: event.target.name as keyof SignUpFormFields,
-                        value: event.target.value,
-                      }),
-                    )
+                    password !== '' && password && handleBlur(event, password, false)
                   }
                   onChange={(event) => handleChange(event.target.name, event.target.value)}
                 />
               </Grid>
             </Grid>
             <LoadingButton
-              loading={fetchStatus === FetchingStatus.LOADING}
-              color={fetchStatus === FetchingStatus.ERROR ? 'error' : 'info'}
+              loading={signUpFetchStatus === FetchingStatus.LOADING}
+              color={signUpFetchStatus === FetchingStatus.ERROR ? 'error' : 'info'}
               type="submit"
               disabled={
                 firstNameError ||
@@ -233,8 +304,19 @@ export default function SignUp() {
             </Grid>
           </Box>
         </Box>
-        <Copyright sx={{ mt: 5 }} />
+        <Copyright />
       </Container>
+      <Notificator
+        opened={errorNotificatorIsOpened}
+        dialogTitle={dialogTitle}
+        dialogContentText={dialogContentText}
+        handleClose={handleErrorNotificatorClose}
+      />
+      <OperationResultDialog
+        successText="Пользователь успешно зарегестрирован"
+        errorText="Ошибки валидации на сервере"
+        onSuccess={() => {}}
+      />
     </ThemeProvider>
   );
 }

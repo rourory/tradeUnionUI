@@ -6,12 +6,11 @@ import {
   SignUpFormType,
   SignUpFormFields,
   SignUpFormFieldSetterType,
-  SignUpFormErrorsSetterType,
 } from '../../types/localStatesTypes/signUp-form-slice-types';
 import { isFieldValid } from '../../validation/fieldValidator';
 
 const initialState: SignUpFormType = {
-  fetchStatus: FetchingStatus.SUCCESS,
+  signUpFetchStatus: FetchingStatus.SUCCESS,
   fields: {
     firstName: '',
     lastName: '',
@@ -48,7 +47,7 @@ const signUpForm = createSlice({
       }
     },
     setFetchingStatus(state, action: PayloadAction<FetchingStatus>) {
-      state.fetchStatus = action.payload;
+      state.signUpFetchStatus = action.payload;
     },
   },
 });

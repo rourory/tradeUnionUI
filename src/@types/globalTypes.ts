@@ -3,10 +3,14 @@ export interface Entity {
 }
 
 export type Violations = {
-  violations: ViolationObject[]
-}
+  violations: ViolationObject[];
+};
 
 type ViolationObject = {
   attribute: string;
   messages: string[];
-}
+};
+
+export type ErrorWithMessage = {
+  message: string;
+};

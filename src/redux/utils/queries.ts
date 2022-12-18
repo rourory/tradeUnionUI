@@ -2,7 +2,7 @@ import { UserData, UserRegistrationData, UserDataResponce } from './../types/use
 import axios from 'axios';
 import { getTokenFromLocalStorage } from './redux-utils';
 import { LOCAL_HOST } from '../../URLs';
-import { Entity, Violations } from '../../@types/globalTypes';
+import { Entity, ErrorWithMessage, Violations } from '../../@types/globalTypes';
 import { Cridentials } from '../types/user-slice-types';
 
 /**
@@ -124,7 +124,10 @@ export async function insertQuery<T extends Entity>(
  * @returns - данные пользователя после регистрации
  */
 export function signUp(data: UserRegistrationData) {
-  return axios.post<UserData | Violations>(LOCAL_HOST + 'auth/registration', data);
+  return axios.post<UserData | Violations | ErrorWithMessage>(
+    LOCAL_HOST + 'auth/registration',
+    data,
+  );
 }
 
 /**

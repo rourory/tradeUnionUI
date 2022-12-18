@@ -9,6 +9,7 @@ import confirmClose from './slices/confirm-close-slice';
 import operationResult from './slices/operation-result-slice';
 import user from './slices/user-slice';
 import signUpForm from './slices/localStates/signUp-slice';
+import notificator from './slices/notificator-slice';
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ export const store = configureStore({
     operationResult,
     user,
     signUpForm,
+    notificator,
   },
 });
 

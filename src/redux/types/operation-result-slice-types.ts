@@ -1,10 +1,8 @@
-import { FetchingStatus } from "../../@types/fetchingStatus"
-import { Violations } from "../../@types/globalTypes";
-
-
+import { FetchingStatus } from '../../@types/fetchingStatus';
+import { Violations } from '../../@types/globalTypes';
 
 export type OperationResultDialogType = {
   operationResultDialogIsOpened: boolean;
-  fetchStatus: FetchingStatus;
+  operationResultfetchStatus: FetchingStatus;
   violations: Violations | undefined;
-}
+};

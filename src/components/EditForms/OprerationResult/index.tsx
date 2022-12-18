@@ -29,7 +29,7 @@ const OperationResultDialog: React.FC<OperationResult> = ({
   errorText,
   onSuccess,
 }) => {
-  const { operationResultDialogIsOpened, fetchStatus, violations } = useSelector(
+  const { operationResultDialogIsOpened, operationResultfetchStatus, violations } = useSelector(
     operationResultDialogSelector,
   );
 
@@ -81,7 +81,7 @@ const OperationResultDialog: React.FC<OperationResult> = ({
       onClose={handleClose}
       aria-describedby="alert-dialog-slide-description">
       <DialogTitle>Уведомление</DialogTitle>
-      {renderContent(fetchStatus)}
+      {renderContent(operationResultfetchStatus)}
       <DialogActions>
         <Button onClick={(e) => handleClose()}>Ок</Button>
       </DialogActions>

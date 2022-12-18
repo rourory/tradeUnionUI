@@ -1,7 +1,7 @@
 import { FetchingStatus } from '../../../@types/fetchingStatus';
 
 export interface SignUpFormType {
-  fetchStatus: FetchingStatus;
+  signUpFetchStatus: FetchingStatus;
   fields: SignUpFormFields;
   errors: SignUpFormErrors;
 }
