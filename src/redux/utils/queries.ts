@@ -15,7 +15,6 @@ import { Cridentials } from '../types/user-slice-types';
  */
 export async function fetchQuery<T extends Entity>(table: string, id?: number, subtable?: string) {
   let token: string | undefined = getTokenFromLocalStorage();
-  console.log(token);
   return axios.get<T>(LOCAL_HOST + table + (id && subtable ? `/${id}/${subtable}` : ''), {
     headers: { Authorization: 'Bearer ' + token },
   });
@@ -137,5 +136,8 @@ export function signUp(data: UserRegistrationData) {
  * @returns - данные пользователя после регистрации
  */
 export function signInQuery({ username, password }: Cridentials) {
-  return axios.post<UserDataResponce>(LOCAL_HOST + 'auth/login', { username, password });
+  return axios.post<UserDataResponce | ErrorWithMessage>(LOCAL_HOST + 'auth/login', {
+    username,
+    password,
+  });
 }

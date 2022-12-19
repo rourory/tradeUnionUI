@@ -1,4 +1,5 @@
 import { FetchingStatus } from '../../@types/fetchingStatus';
+import { NotificatorType } from './notificator-slice-types';
 
 export type UserDataResponce = {
   user: UserData;
@@ -14,8 +15,9 @@ export type UserData = {
 
 export type User = {
   user: UserData | undefined;
-  fetchStatus: FetchingStatus;
-  errorMessage: string;
+  userFetchStatus: FetchingStatus;
+  cridentials: Cridentials;
+  notificator: NotificatorType;
 };
 
 export type Cridentials = {

@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   CssBaseline,
@@ -53,7 +52,7 @@ export default function SignUp() {
   const { firstNameError, lastNameError, usernameError, passwordError } =
     useSelector(signUpFormErrorsSelector);
   const { signUpFetchStatus } = useSelector(signUpFormSelector);
-  const { notificatorIsOpened: errorNotificatorIsOpened } = useSelector(notificatorSelector);
+  const { notificatorIsOpened } = useSelector(notificatorSelector);
   const { dialogTitle, dialogContentText } = useSelector(notificatorContentSelector);
 
   /**
@@ -307,7 +306,7 @@ export default function SignUp() {
         <Copyright />
       </Container>
       <Notificator
-        opened={errorNotificatorIsOpened}
+        opened={notificatorIsOpened}
         dialogTitle={dialogTitle}
         dialogContentText={dialogContentText}
         handleClose={handleErrorNotificatorClose}

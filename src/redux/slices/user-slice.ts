@@ -5,33 +5,49 @@ import { RootState } from '../store';
 import { Cridentials, User } from '../types/user-slice-types';
 import { signInQuery } from '../utils/queries';
 import { setTokenToLocalStorage } from '../utils/redux-utils';
+import { ErrorWithMessage } from '../../@types/globalTypes';
+import { NotificatorContentType } from '../types/notificator-slice-types';
 
 const initialState: User = {
   user: undefined,
-  fetchStatus: FetchingStatus.LOADING,
-  errorMessage: '',
+  userFetchStatus: FetchingStatus.SUCCESS,
+  cridentials: {
+    username: '',
+    password: '',
+  },
+  notificator: {
+    notificatorIsOpened: false,
+    content: {
+      dialogTitle: '',
+      dialogContentText: '',
+    },
+  },
 };
 
 export const signIn = createAsyncThunk<UserDataResponce, Cridentials>(
-  'user/SignIn',
-  async ({ username, password }, { rejectWithValue }) => {
+  'user/signIn',
+  async (cridentials: Cridentials, thunkApi) => {
     let status = 0;
-    let response: any = [];
-    await signInQuery({ username, password })
+    let response: any = undefined;
+    await signInQuery(cridentials)
       .then((res) => {
-        console.log('DATA AFTER SIGN IN: ', res);
         status = res.status;
-        if (status === 0 || status === 203) {
-          return rejectWithValue(response as string);
+        if (status !== 200) {
+          response = res.data as ErrorWithMessage;
         } else {
-          setTokenToLocalStorage(res.data.jwt_token);
+          const { jwt_token } = res.data as UserDataResponce;
+          setTokenToLocalStorage(jwt_token);
           response = res.data;
         }
       })
-      .catch((err) => {
-        console.log(err);
+      .catch(async (err) => {
+        response = { message: 'Неизвестная ошибка' };
       });
-    return response;
+    if (status !== 200) {
+      return thunkApi.rejectWithValue(response);
+    } else {
+      return response;
+    }
   },
 );
 
@@ -43,28 +59,51 @@ const userSlice = createSlice({
       state.user = action.payload;
     },
     setFetchStatus(state, action: PayloadAction<FetchingStatus>) {
-      state.fetchStatus = action.payload;
+      state.userFetchStatus = action.payload;
+    },
+    setUsername(state, action: PayloadAction<string>) {
+      state.cridentials.username = action.payload;
+    },
+    setPassword(state, action: PayloadAction<string>) {
+      state.cridentials.password = action.payload;
+    },
+    setOpenedNotificationSignUpDialod(state, action: PayloadAction<boolean>) {
+      state.notificator.notificatorIsOpened = action.payload;
+    },
+    setNotificationContent(state, action: PayloadAction<NotificatorContentType>) {
+      state.notificator.content = action.payload;
     },
   },
   extraReducers: (builder) => {
     builder.addCase(signIn.pending, (state, action) => {
       state.user = undefined;
-      state.errorMessage = '';
-      state.fetchStatus = FetchingStatus.LOADING;
+      state.userFetchStatus = FetchingStatus.LOADING;
     });
     builder.addCase(signIn.fulfilled, (state, action) => {
+      state.userFetchStatus = FetchingStatus.SUCCESS;
       state.user = action.payload.user;
-      state.errorMessage = '';
-      state.fetchStatus = FetchingStatus.SUCCESS;
+      state.cridentials = { username: '', password: '' };
     });
     builder.addCase(signIn.rejected, (state, action) => {
       state.user = undefined;
-      state.errorMessage = action.payload as string;
-      state.fetchStatus = FetchingStatus.ERROR;
+      const { message } = action.payload as ErrorWithMessage;
+      state.userFetchStatus = FetchingStatus.ERROR;
+      state.notificator.content = { dialogTitle: 'Ошибка', dialogContentText: message };
+      state.notificator.notificatorIsOpened = true;
     });
   },
 });
 
 export default userSlice.reducer;
 export const userSelector = (state: RootState) => state.user;
-export const { setUser } = userSlice.actions;
+export const userCridentialsSelector = (state: RootState) => state.user.cridentials;
+export const userNotificationSignUpFormSelector = (state: RootState) => state.user.notificator;
+export const userNotificationSignUpFormContentSelector = (state: RootState) =>
+  state.user.notificator.content;
+export const {
+  setUser,
+  setUsername,
+  setPassword,
+  setOpenedNotificationSignUpDialod,
+  setNotificationContent,
+} = userSlice.actions;

@@ -1,9 +1,6 @@
 import * as React from 'react';
-import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -13,10 +10,22 @@ import Logo from '../Logo';
 import AppLink from '../Link';
 import { CCarousel, CCarouselItem, CImage } from '@coreui/react';
 import { Cridentials } from '../../redux/types/user-slice-types';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '../../redux/store';
-import { signIn } from '../../redux/slices/user-slice';
+import {
+  setOpenedNotificationSignUpDialod,
+  setPassword,
+  setUsername,
+  signIn,
+  userCridentialsSelector,
+  userNotificationSignUpFormContentSelector,
+  userNotificationSignUpFormSelector,
+  userSelector,
+} from '../../redux/slices/user-slice';
 import Copyright from '../SignUp/Copyright';
+import { LoadingButton } from '@mui/lab';
+import Notificator from '../Notificator';
+import { FetchingStatus } from '../../@types/fetchingStatus';
 
 const renderCarousel = () => {
   return (
@@ -38,14 +47,25 @@ const theme = createTheme();
 
 export default function SignInSide() {
   const dispatch = useDispatch<AppDispatch>();
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const { notificatorIsOpened } = useSelector(userNotificationSignUpFormSelector);
+  const { dialogTitle, dialogContentText } = useSelector(userNotificationSignUpFormContentSelector);
+  const { username, password } = useSelector(userCridentialsSelector);
+  const { userFetchStatus } = useSelector(userSelector);
+  /**
+   * Метод занимается сокрытием компонента ErrorNotification
+   */
+  const handleErrorNotificatorClose = () => {
+    dispatch(setOpenedNotificationSignUpDialod(false));
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const cridentials: Cridentials = {
       username: data.get('username')?.toString() || '',
       password: data.get('password')?.toString() || '',
     };
-    dispatch(signIn(cridentials));
+    await dispatch(signIn(cridentials));
   };
 
   return (
@@ -79,9 +99,10 @@ export default function SignInSide() {
             <Typography component="h1" variant="h4">
               Авторизация
             </Typography>
-            <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1 }}>
+            <Box component="form" noValidate onSubmit={handleSubmit} sx={{ width: '75%', mt: 1 }}>
               <Grid item xs={12}>
                 <TextField
+                  value={username}
                   margin="normal"
                   required
                   fullWidth
@@ -90,9 +111,11 @@ export default function SignInSide() {
                   name="username"
                   autoComplete="user-name"
                   autoFocus
+                  onChange={(event) => dispatch(setUsername(event.target.value))}
                 />
               </Grid>
               <TextField
+                value={password}
                 margin="normal"
                 required
                 fullWidth
@@ -101,14 +124,18 @@ export default function SignInSide() {
                 type="password"
                 id="password"
                 autoComplete="current-password"
+                onChange={(event) => dispatch(setPassword(event.target.value))}
               />
-              <FormControlLabel
-                control={<Checkbox value="remember" color="primary" />}
-                label="Запомнить меня"
-              />
-              <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
+              <LoadingButton
+                loading={userFetchStatus === FetchingStatus.LOADING}
+                color={userFetchStatus === FetchingStatus.ERROR ? 'error' : 'info'}
+                disabled={username === '' || password === ''}
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{ mt: 3, mb: 2 }}>
                 Войти
-              </Button>
+              </LoadingButton>
               <Grid container>
                 <Grid item xs>
                   <AppLink to="#" color="blue" fontSize="14px" text="Забыли пароль?"></AppLink>
@@ -127,6 +154,12 @@ export default function SignInSide() {
           </Box>
         </Grid>
       </Grid>
+      <Notificator
+        opened={notificatorIsOpened}
+        dialogTitle={dialogTitle}
+        dialogContentText={dialogContentText}
+        handleClose={handleErrorNotificatorClose}
+      />
     </ThemeProvider>
   );
 }
