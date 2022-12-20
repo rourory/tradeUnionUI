@@ -30,6 +30,9 @@ const PersonData: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [dataGridHeight, setDataGridHeight] = React.useState(window.innerHeight - 88);
 
+  /**
+   * Метод позволяет ограничивать количество открытых вкладок дополнительной информации до одной
+   */
   const rowExpanding = React.useCallback(
     (e: Cancelable & EventInfo<dxDataGrid<PersonEntityDataType, number>> & RowKeyInfo<number>) => {
       e.component.collapseAll(-1);
@@ -38,6 +41,9 @@ const PersonData: React.FC = () => {
     [],
   );
 
+  /**
+   * Метод управляет окном для редактирования данных
+   */
   const openEditPersonDialog = (ev: CellDblClickEvent<PersonEntityDataType, number>) => {
     dispatch(setPersonEditFormFetchStatus(FetchingStatus.LOADING));
     dispatch(setHasErrors(false));
@@ -49,6 +55,10 @@ const PersonData: React.FC = () => {
 
   const rows = React.useMemo(() => new DataSource(createStore<PersonEntityDataType>('people')), []);
 
+  /**
+   * При рендере необходимо повесить на window listener, который будет определять размеры контетна внутри MainLayout (в данном случае компонента DataGrid)
+   * и запрашивает у сервера информацию о классификаторах, используемых для редактирования данных в DataGrid
+   */
   React.useEffect(() => {
     window.addEventListener('resize', () => setDataGridHeight(window.innerHeight - 88));
     dispatch(fetchClassificationsData());

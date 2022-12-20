@@ -1,7 +1,7 @@
 import { UserData, UserRegistrationData, UserDataResponce } from './../types/user-slice-types';
 import axios from 'axios';
 import { getTokenFromLocalStorage } from './redux-utils';
-import { LOCAL_HOST } from '../../URLs';
+import { LOCAL_HOST } from '../../constants';
 import { Entity, ErrorWithMessage, Violations } from '../../@types/globalTypes';
 import { Cridentials } from '../types/user-slice-types';
 
@@ -120,7 +120,7 @@ export async function insertQuery<T extends Entity>(
 /**
  * Метод отправки данных пользователя для регистрации.
  * @param data - данные пользователя
- * @returns - данные пользователя после регистрации
+ * @returns - данные пользователя после регистрации, ошибки валидации или ошибку
  */
 export function signUp(data: UserRegistrationData) {
   return axios.post<UserData | Violations | ErrorWithMessage>(
@@ -133,11 +133,23 @@ export function signUp(data: UserRegistrationData) {
  * Метод отправки данных пользователя для авторизации.
  * @param username - имя пользователя
  * @param password - пароль
- * @returns - данные пользователя после регистрации
+ * @returns - данные пользователя после регистрации или ошибку
  */
 export function signInQuery({ username, password }: Cridentials) {
   return axios.post<UserDataResponce | ErrorWithMessage>(LOCAL_HOST + 'auth/login', {
     username,
     password,
   });
+}
+
+/**
+ * Метод отправки данных пользователя для авторизации через токен.
+ * @param token - токен пользователя
+ * @returns - данные пользователя после регистрации или ошибку
+ */
+export function signInWithTokenQuery(token: string) {
+  return axios.post<UserDataResponce | ErrorWithMessage>(
+    LOCAL_HOST + 'auth/login_with_token',
+    token,
+  );
 }

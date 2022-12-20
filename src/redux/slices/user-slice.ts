@@ -3,7 +3,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { FetchingStatus } from '../../@types/fetchingStatus';
 import { RootState } from '../store';
 import { Cridentials, User } from '../types/user-slice-types';
-import { signInQuery } from '../utils/queries';
+import { signInQuery, signInWithTokenQuery } from '../utils/queries';
 import { setTokenToLocalStorage } from '../utils/redux-utils';
 import { ErrorWithMessage } from '../../@types/globalTypes';
 import { NotificatorContentType } from '../types/notificator-slice-types';
@@ -30,6 +30,33 @@ export const signIn = createAsyncThunk<UserDataResponce, Cridentials>(
     let status = 0;
     let response: any = undefined;
     await signInQuery(cridentials)
+      .then((res) => {
+        status = res.status;
+        if (status !== 200) {
+          response = res.data as ErrorWithMessage;
+        } else {
+          const { jwt_token } = res.data as UserDataResponce;
+          setTokenToLocalStorage(jwt_token);
+          response = res.data;
+        }
+      })
+      .catch(async (err) => {
+        response = { message: 'Неизвестная ошибка' };
+      });
+    if (status !== 200) {
+      return thunkApi.rejectWithValue(response);
+    } else {
+      return response;
+    }
+  },
+);
+
+export const signInWithToken = createAsyncThunk<UserDataResponce, string>(
+  'user/signInWithToken',
+  async (token: string, thunkApi) => {
+    let status = 0;
+    let response: any = undefined;
+    await signInWithTokenQuery(token)
       .then((res) => {
         status = res.status;
         if (status !== 200) {
@@ -90,6 +117,15 @@ const userSlice = createSlice({
       state.userFetchStatus = FetchingStatus.ERROR;
       state.notificator.content = { dialogTitle: 'Ошибка', dialogContentText: message };
       state.notificator.notificatorIsOpened = true;
+    });
+    builder.addCase(signInWithToken.pending, (state, action) => {
+      state.user = undefined;
+    });
+    builder.addCase(signInWithToken.fulfilled, (state, action) => {
+      state.user = action.payload.user;
+    });
+    builder.addCase(signInWithToken.rejected, (state, action) => {
+      state.user = undefined;
     });
   },
 });

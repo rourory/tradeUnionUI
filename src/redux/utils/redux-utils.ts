@@ -1,3 +1,5 @@
+import { VALIDITY_TIME } from '../../constants';
+
 /**
  * Метод занимается сохранением токена в localStorage и регистрацией времени сохранения
  * @param token - токен, передаваемый для сохранения в localStorage
@@ -13,7 +15,7 @@ export const setTokenToLocalStorage = (token: string): void => {
  */
 export const getTokenFromLocalStorage = (): string | undefined => {
   const issueDateMilliseconds = new Number(localStorage.getItem('trade_union_auth_token_created'));
-  if (new Date().getTime() - new Date(issueDateMilliseconds.valueOf()).getTime() <= 1671469204979)
+  if (new Date().getTime() - new Date(issueDateMilliseconds.valueOf()).getTime() <= VALIDITY_TIME)
     return localStorage.getItem('trade_union_auth_token')?.substring(7) || '';
   return undefined;
 };

@@ -13,16 +13,17 @@ import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import HideOnScroll from './hideOnScroll';
 import { AppDispatch } from '../../redux/store';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setOpened } from '../../redux/slices/drawer-slice';
 import { Divider } from '@mui/material';
-import { setUser } from '../../redux/slices/user-slice';
+import { setUser, userSelector } from '../../redux/slices/user-slice';
 
 const pages = ['PageOne', 'PageTwo', 'PageThree'];
-const settings = ['Profile', 'Account', 'Dashboard'];
+const settings = ['Профиль', 'Account', 'Dashboard'];
 
 const ResponsiveAppBar = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { user } = useSelector(userSelector);
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     dispatch(setOpened(true));
@@ -40,6 +41,7 @@ const ResponsiveAppBar = () => {
   const logout = () => {
     dispatch(setUser(undefined));
     localStorage.removeItem('trade_union_auth_token');
+    localStorage.removeItem('trade_union_auth_token_created');
   };
 
   return (
@@ -107,7 +109,7 @@ const ResponsiveAppBar = () => {
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Открыть настройки">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar alt="USERNAME" src="/static/images/avatar/2.jpg" />
+                  <Avatar alt={user?.lastName || 'USERNAME'} src="/static/images/avatar/2.jpg" />
                 </IconButton>
               </Tooltip>
               <Menu

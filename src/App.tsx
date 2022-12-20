@@ -8,35 +8,69 @@ import TradeUnionData from './components/DataGrids/TradeUnionData';
 import About from './components/About';
 import SignInSide from './components/SignIn';
 import SignUp from './components/SignUp';
-import { userSelector } from './redux/slices/user-slice';
-import { useSelector } from 'react-redux';
+import { signIn, signInWithToken, userSelector } from './redux/slices/user-slice';
+import { useSelector, useDispatch } from 'react-redux';
+import { AppDispatch } from './redux/store';
 import 'devextreme/dist/css/dx.common.css';
 import 'devextreme/dist/css/dx.light.css';
 import 'devextreme/dist/css/dx.light.css';
 import '@coreui/coreui/dist/css/coreui.min.css';
+import { getTokenFromLocalStorage } from './redux/utils/redux-utils';
+import CustomLoadingIndicator from './components/LoadingIndicator';
+import {
+  mainContentRenderSelector,
+  setRendered,
+} from './redux/slices/localStates/main-content-rendered-slice';
+import styles from './components/LoadingIndicator/customLoadingDiv.module.scss';
+import { UsersData } from './components/DataGrids/UsersData';
 
 const App: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { rendered } = useSelector(mainContentRenderSelector);
   const { user } = useSelector(userSelector);
 
-  return (
-    <BrowserRouter>
-      <Routes>
-        {user ? (
-          <Route path="/" element={<MainLayout />}>
-            <Route path="people" element={<PersonData />} />
-            <Route path="unions" element={<TradeUnionData />} />
-            <Route path="about" element={<About />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        ) : (
-          <>
-            <Route path="/register" element={<SignUp />} />
-            <Route path="*" element={<SignInSide />} />
-          </>
-        )}
-      </Routes>
-    </BrowserRouter>
-  );
+  React.useEffect(() => {
+    if (getTokenFromLocalStorage()) {
+      console.log('dispatching with token: ', getTokenFromLocalStorage() as string);
+      dispatch(signInWithToken(getTokenFromLocalStorage() as string));
+    }
+  }, []);
+
+  React.useEffect(() => {}, [rendered]);
+
+  // Первый четыре секунды при первом рендере будет показываться индикатор загрузки
+  if (!rendered) {
+    setTimeout(() => {
+      dispatch(setRendered(true));
+    }, 3000);
+    return (
+      <div className={styles.indicator}>
+        {/* <img src="/img/logo.png" /> */}
+        <CustomLoadingIndicator />
+      </div>
+    );
+  } else {
+    return (
+      <BrowserRouter>
+        <Routes>
+          {user ? (
+            <Route path="/" element={<MainLayout />}>
+              {user.role === 'ROLE_ADMIN' && <Route path="users" element={<UsersData />} />}
+              <Route path="people" element={<PersonData />} />
+              <Route path="unions" element={<TradeUnionData />} />
+              <Route path="about" element={<About />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          ) : (
+            <>
+              <Route path="/register" element={<SignUp />} />
+              <Route path="*" element={<SignInSide />} />
+            </>
+          )}
+        </Routes>
+      </BrowserRouter>
+    );
+  }
 };
 
 export default App;
