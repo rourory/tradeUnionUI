@@ -17,9 +17,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setOpened } from '../../redux/slices/drawer-slice';
 import { Divider } from '@mui/material';
 import { setUser, userSelector } from '../../redux/slices/user-slice';
+import AppLink from '../Link';
 
-const pages = ['PageOne', 'PageTwo', 'PageThree'];
-const settings = ['Профиль', 'Account', 'Dashboard'];
+// const pages = ['Главная'];
+const settings = ['Профиль', 'Избранное', 'Заметки'];
 
 const ResponsiveAppBar = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -48,7 +49,7 @@ const ResponsiveAppBar = () => {
     <HideOnScroll>
       <AppBar position="sticky" sx={{ height: 68 }}>
         <Container maxWidth="xl" fixed sx={{ marginLeft: 1, maxWidth: '95% !important' }}>
-          <Toolbar disableGutters>
+          <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
             {/** Кнопка для Drawer */}
             <IconButton
               size="large"
@@ -68,25 +69,7 @@ const ResponsiveAppBar = () => {
               sx={{
                 mr: 2,
                 marginLeft: 1,
-                display: { xs: 'none', md: 'flex' },
-                fontFamily: 'roboto',
-                fontWeight: 700,
-                letterSpacing: '.1rem',
-                color: 'inherit',
-                textDecoration: 'none',
-              }}>
-              TRADE UNIONS
-            </Typography>
-
-            {/** Заголовок в узком формате (display md:none)*/}
-            <Typography
-              variant="subtitle1"
-              noWrap
-              component="a"
-              sx={{
-                mr: 2,
-                display: { xs: 'flex', md: 'none' },
-                flexGrow: 1,
+                display: { xs: 'flex', md: 'flex' },
                 fontFamily: 'roboto',
                 fontWeight: 700,
                 letterSpacing: '.1rem',
@@ -97,13 +80,18 @@ const ResponsiveAppBar = () => {
             </Typography>
 
             {/** Кнопки навигации */}
-            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, marginLeft: 2 }}>
+            {/* <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, marginLeft: 2 }}>
               {pages.map((page) => (
                 <Button key={page} sx={{ my: 2, color: 'white', display: 'block' }}>
-                  {page}
+                  <AppLink
+                    to="/"
+                    key={page}
+                    text={page}
+                    color={'inherit'}
+                    fontSize="12px"></AppLink>
                 </Button>
               ))}
-            </Box>
+            </Box> */}
 
             {/** Кнопка профиля пользователя */}
             <Box sx={{ flexGrow: 0 }}>

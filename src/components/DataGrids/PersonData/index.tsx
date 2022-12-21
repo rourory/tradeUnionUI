@@ -12,7 +12,7 @@ import DataSource from 'devextreme/data/data_source';
 import { Cancelable, EventInfo } from 'devextreme/events';
 import dxDataGrid, { CellDblClickEvent, RowKeyInfo } from 'devextreme/ui/data_grid';
 import { AppDispatch } from '../../../redux/store';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import React from 'react';
 import { createStore } from '../../../devExpressUtil/createStore';
 import { setFetchStatus } from '../../../redux/slices/person-details-slice';
@@ -25,10 +25,12 @@ import {
 import PersonEditForm from '../../EditForms/Person';
 import { PersonEntityDataType } from '../../../@types/personTypes';
 import { fetchClassificationsData, setHasErrors } from '../../../redux/slices/classification-slice';
+import { userSelector } from '../../../redux/slices/user-slice';
 
 const PersonData: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [dataGridHeight, setDataGridHeight] = React.useState(window.innerHeight - 88);
+  const { user } = useSelector(userSelector);
 
   /**
    * Метод позволяет ограничивать количество открытых вкладок дополнительной информации до одной
@@ -45,12 +47,14 @@ const PersonData: React.FC = () => {
    * Метод управляет окном для редактирования данных
    */
   const openEditPersonDialog = (ev: CellDblClickEvent<PersonEntityDataType, number>) => {
-    dispatch(setPersonEditFormFetchStatus(FetchingStatus.LOADING));
-    dispatch(setHasErrors(false));
-    dispatch(setOpened(true));
-    setTimeout(() => {
-      ev.data.id && dispatch(fetchByIdData(ev.data.id));
-    }, 1000);
+    if (user?.role === 'ROLE_ADMIN') {
+      dispatch(setPersonEditFormFetchStatus(FetchingStatus.LOADING));
+      dispatch(setHasErrors(false));
+      dispatch(setOpened(true));
+      setTimeout(() => {
+        ev.data.id && dispatch(fetchByIdData(ev.data.id));
+      }, 1000);
+    }
   };
 
   const rows = React.useMemo(() => new DataSource(createStore<PersonEntityDataType>('people')), []);
@@ -81,13 +85,26 @@ const PersonData: React.FC = () => {
           showPane: false,
           text: 'Загрузка данных...',
         }}>
-        <Editing
-          mode="row"
-          allowUpdating={true}
-          allowDeleting={true}
-          confirmDelete
-          useIcons={true}
-        />
+        {user?.role === 'ROLE_ADMIN' && (
+          <Editing
+            mode="row"
+            allowUpdating={true}
+            allowDeleting={true}
+            confirmDelete
+            useIcons={true}
+          />
+        )}
+
+        {user?.role === 'ROLE_ADMIN' && (
+          <MasterDetail enabled={true} component={PersonDataDetails} />
+        )}
+        {user?.role === 'ROLE_ADMIN' && (
+          <PersonEditForm
+            onUpdatingSuccess={() => {
+              rows.reload();
+            }}
+          />
+        )}
         <Column dataField={'lastName'} caption={'Фамилия'} dataType="string" hidingPriority={1} />
         <Column dataField={'firstName'} caption={'Имя'} dataType="string" hidingPriority={2} />
         <Column
@@ -106,14 +123,8 @@ const PersonData: React.FC = () => {
         <SearchPanel placeholder={'Поиск...'} visible={true} />
         <FilterRow visible={true} />
         <GroupPanel emptyPanelText="Переместите сюда колонки для группировки" visible={true} />
-        <MasterDetail enabled={true} component={PersonDataDetails} />
         <Scrolling mode="virtual" />
       </DataGrid>
-      <PersonEditForm
-        onUpdatingSuccess={() => {
-          rows.reload();
-        }}
-      />
     </>
   );
 };

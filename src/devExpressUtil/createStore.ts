@@ -1,5 +1,11 @@
 import CustomStore from 'devextreme/data/custom_store';
-import { fetchQuery, putQuery, fetchByIdQuery, deleteQuery, insertQuery } from '../redux/utils/queries';
+import {
+  fetchQuery,
+  putQuery,
+  fetchByIdQuery,
+  deleteQuery,
+  insertQuery,
+} from '../redux/utils/queries';
 import { setTokenToLocalStorage } from '../redux/utils/redux-utils';
 import { Entity } from '../@types/globalTypes';
 /**
@@ -15,7 +21,7 @@ function updateValuesOfEntityDataTypeObject<T extends Entity>(changingEntity: T,
   });
 
   return changingEntity;
-};
+}
 
 /**
  * @param table - сущность
@@ -36,15 +42,15 @@ export function createStore<T extends Entity>(table: string) {
     },
     insert: async function (values) {
       await insertQuery<T>(table, values as T)
-        .then(res => {
+        .then((res) => {
           setTokenToLocalStorage(res.headers.authorization || '');
         })
-        .catch(err => console.log(err))
+        .catch((err) => console.log(err));
     },
     remove: async function (key) {
       await deleteQuery<T>(table, key)
-        .then(res => console.log(res))
-        .catch(err => console.log(err))
+        .then((res) => console.log(res))
+        .catch((err) => console.log(err));
     },
     update: async function (key, values) {
       await fetchByIdQuery<T>(table, key)
@@ -52,12 +58,12 @@ export function createStore<T extends Entity>(table: string) {
           const returnedData: T = updateValuesOfEntityDataTypeObject(res.data, values);
 
           await putQuery<T>(table, returnedData)
-            .then(res => {
+            .then((res) => {
               setTokenToLocalStorage(res.headers.authorization || '');
             })
-            .catch(err => console.log(123, err));
-        }).catch(err => console.log(err))
-
+            .catch((err) => console.log(123, err));
+        })
+        .catch((err) => console.log(err));
     },
   });
 }
@@ -67,7 +73,11 @@ export function createStore<T extends Entity>(table: string) {
  * @param subtable - зависимая сущность
  * @returns объект store для использования в компоненте DataGrid (вариант с зависимой сущностью)
  */
-export function createStoreForSubtable<T extends Entity>(table: string, id: number, subtable?: string) {
+export function createStoreForSubtable<T extends Entity>(
+  table: string,
+  id: number,
+  subtable?: string,
+) {
   return new CustomStore({
     key: 'id',
     load: async function (loadOptions) {
@@ -82,15 +92,15 @@ export function createStoreForSubtable<T extends Entity>(table: string, id: numb
     },
     insert: async function (values) {
       await insertQuery<T>(table, values as T, id, subtable)
-        .then(res => {
+        .then((res) => {
           setTokenToLocalStorage(res.headers.authorization || '');
         })
-        .catch(err => console.log(err))
+        .catch((err) => console.log(err));
     },
     remove: async function (key) {
       await deleteQuery<T>(table, id, subtable, key)
-        .then(res => console.log(res))
-        .catch(err => console.log(err))
+        .then((res) => console.log(res))
+        .catch((err) => console.log(err));
     },
     update: async function (key, values) {
       await fetchByIdQuery<T>(table, id, subtable, key)
@@ -98,13 +108,12 @@ export function createStoreForSubtable<T extends Entity>(table: string, id: numb
           const returnedData: T = updateValuesOfEntityDataTypeObject(res.data, values);
 
           await putQuery<T>(table, returnedData, subtable, id)
-            .then(res => {
+            .then((res) => {
               setTokenToLocalStorage(res.headers.authorization || '');
             })
-            .catch(err => console.log(123, err));
-        }).catch(err => console.log(err))
-
+            .catch((err) => console.log(err));
+        })
+        .catch((err) => console.log(err));
     },
   });
 }
-

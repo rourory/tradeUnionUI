@@ -12,7 +12,7 @@ type AppLinkType = {
 const AppLink: React.FC<AppLinkType> = ({ to, color = undefined, fontSize, text }) => {
   return (
     <span className={styles.appLink}>
-      <Link style={{ color: `${color}`, fontSize: `${fontSize}` }} to={to}>
+      <Link style={{ color: `${color}`, fontSize: `${fontSize}`, textDecoration: 'none' }} to={to}>
         <p>{text}</p>
       </Link>
     </span>

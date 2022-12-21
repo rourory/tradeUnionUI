@@ -23,6 +23,7 @@ import {
 } from './redux/slices/localStates/main-content-rendered-slice';
 import styles from './components/LoadingIndicator/customLoadingDiv.module.scss';
 import { UsersData } from './components/DataGrids/UsersData';
+import MainContent from './components/Main';
 
 const App: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -31,7 +32,6 @@ const App: React.FC = () => {
 
   React.useEffect(() => {
     if (getTokenFromLocalStorage()) {
-      console.log('dispatching with token: ', getTokenFromLocalStorage() as string);
       dispatch(signInWithToken(getTokenFromLocalStorage() as string));
     }
   }, []);
@@ -45,7 +45,6 @@ const App: React.FC = () => {
     }, 3000);
     return (
       <div className={styles.indicator}>
-        {/* <img src="/img/logo.png" /> */}
         <CustomLoadingIndicator />
       </div>
     );
@@ -55,7 +54,8 @@ const App: React.FC = () => {
         <Routes>
           {user ? (
             <Route path="/" element={<MainLayout />}>
-              {user.role === 'ROLE_ADMIN' && <Route path="users" element={<UsersData />} />}
+              <Route index element={<MainContent />} />
+              {user.role === 'ROLE_ADMIN' && <Route path="/users" element={<UsersData />} />}
               <Route path="people" element={<PersonData />} />
               <Route path="unions" element={<TradeUnionData />} />
               <Route path="about" element={<About />} />

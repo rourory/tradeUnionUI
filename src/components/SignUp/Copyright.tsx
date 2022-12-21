@@ -5,7 +5,7 @@ const Copyright: React.FC = () => {
   return (
     <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 5 }}>
       {'Copyright © '}
-      <Link to="http://localhost:3000/">Trade Unions</Link> {new Date().getFullYear()}
+      <Link to="/">Trade Unions</Link> {new Date().getFullYear()}
       {'.'}
     </Typography>
   );
