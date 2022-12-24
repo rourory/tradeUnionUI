@@ -6,8 +6,6 @@ import {
   Editing,
   FilterRow,
   GroupPanel,
-  Pager,
-  Paging,
   Scrolling,
   SearchPanel,
 } from 'devextreme-react/data-grid';

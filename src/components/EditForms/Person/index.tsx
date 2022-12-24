@@ -7,8 +7,8 @@ import { setOpenedConfirmDialog } from '../../../redux/slices/confirm-close-slic
 import ConfirmCloseDialog from '../ConfirmClose';
 import { FetchingStatus } from '../../../@types/fetchingStatus';
 import styles from '../../LoadingIndicator/customLoadingDiv.module.scss';
-import Form, { GroupItem } from 'devextreme-react/form';
-import { DateBox, SelectBox, TextArea, TextBox } from 'devextreme-react';
+import Form, { GroupItem, RangeRule, RequiredRule } from 'devextreme-react/form';
+import { DateBox, SelectBox, TextArea, TextBox, ValidationGroup } from 'devextreme-react';
 import CustomLoadingIndicator from '../../LoadingIndicator';
 import {
   editPersonFormSelector,
@@ -16,6 +16,10 @@ import {
   setDataEqualsChangedData,
   setEditPersonDataDiffers,
   setOpened,
+  addBorkenRuleByFieldName,
+  removeBrokenRuleByFieldName,
+  removeAllBrokenRules,
+  checkEmptyFields,
 } from '../../../redux/slices/edit-peson-form-slice';
 import { classificationsSelector } from '../../../redux/slices/classification-slice';
 import Transition from '../Transition';
@@ -28,17 +32,179 @@ import {
   setViolation,
 } from '../../../redux/slices/operation-result-slice';
 import { Violations } from '../../../@types/globalTypes';
+import Validator, { CustomRule } from 'devextreme-react/validator';
+import { isFieldValid } from '../../../redux/validation/fieldValidator';
+import { ValidatedEvent } from 'devextreme/ui/validator';
+import { UnvalidFieldType } from '../../../redux/types/edit-person-form-slice-types';
+import { formatNameToRightTemplate } from '../../../redux/utils/stringOperations';
 
 type PersonEditFormType = {
   onUpdatingSuccess: () => void;
 };
+const requiredFields: Array<keyof PersonEntityDataType> = [
+  'lastName',
+  'firstName',
+  'birthDate',
+  'maritalState',
+];
 
 const PersonEditForm: React.FC<PersonEditFormType> = ({ onUpdatingSuccess }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { data, fetchStatus, opened, editPersonDataDiffers, validationError } =
+  const { data, fetchStatus, opened, editPersonDataDiffers, unvalidFields } =
     useSelector(editPersonFormSelector);
   const { maritalState, education } = useSelector(classificationsSelector);
 
+  React.useEffect(() => {
+    console.log(unvalidFields);
+  }, [unvalidFields]);
+
+  /**
+   * Сопровождает валидацию всех подписавшихся валидаторов
+   */
+  const handleValidate = React.useCallback(
+    (ev: ValidatedEvent, fieldName: keyof PersonEntityDataType) => {
+      if (ev.isValid) {
+        dispatch(
+          removeBrokenRuleByFieldName({ fieldName: fieldName, message: '', value: ev.value }),
+        );
+      } else {
+        dispatch(
+          addBorkenRuleByFieldName({
+            fieldName: fieldName,
+            message: ev.brokenRule?.message || 'Ошибка',
+            value: ev.value,
+          }),
+        );
+      }
+    },
+    [],
+  );
+
+  /**
+   * Обрабатывает нажатие на кнопку "Закрыть" формы редактирования
+   */
+  const handleClose = () => {
+    if (editPersonDataDiffers) {
+      dispatch(setOpenedConfirmDialog(true));
+    } else {
+      dispatch(setOpened(false));
+      dispatch(removeAllBrokenRules());
+    }
+  };
+
+  /**
+   * Обрабатывает нажатие на кноку "Да" в диалоге закрытия окна без сохранения
+   */
+  const onClickYes = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    dispatch(setOpenedConfirmDialog(false));
+    dispatch(setOpened(false));
+    dispatch(setEditPersonDataDiffers(false));
+  };
+
+  /**
+   * Проверяет все пустые значения полей формы
+   * @returns true, если хотя бы одно поле является пустым
+   */
+  const isAnyFieldEmpty = (
+    personData: PersonEntityDataType,
+    reqFlds: Array<keyof PersonEntityDataType>,
+  ): boolean => {
+    for (const value of reqFlds) {
+      if (
+        personData[value as keyof PersonEntityDataType] === '' ||
+        personData[value as keyof PersonEntityDataType] === null ||
+        personData[value as keyof PersonEntityDataType] === 0
+      )
+        return true;
+    }
+    return false;
+  };
+
+  /**
+   * Обрабатывает нажатие на кнопку "Сохранить"
+   * Перед сохранением вызывает метод {@link isAnyFieldEmpty}
+   * для проверки пустых полей.
+   */
+  const onSaveClick = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    if (!isAnyFieldEmpty(data, requiredFields)) {
+      dispatch(setOpenedOperationResultDialog(true));
+      await putQuery<PersonEntityDataType>('people', data)
+        .then((res) => {
+          if (res.status === 200) {
+            console.log('Sucssesful responce: ', res.data);
+            dispatch(setOperationResultFetchStatus(FetchingStatus.SUCCESS));
+            dispatch(setDataEqualsChangedData(res.data as PersonEntityDataType));
+          } else if (res.status === 203) {
+            dispatch(setOperationResultFetchStatus(FetchingStatus.VALIDATION_ERROR));
+            dispatch(setViolation(res.data as Violations));
+          } else {
+            dispatch(setOperationResultFetchStatus(FetchingStatus.ERROR));
+          }
+        })
+        .catch((err) => {
+          dispatch(setOperationResultFetchStatus(FetchingStatus.ERROR));
+        });
+    } else {
+      dispatch(checkEmptyFields(requiredFields));
+    }
+  };
+
+  const getValidationErrorByFieldName = (
+    unvalidFlds: UnvalidFieldType[],
+    fldName: keyof PersonEntityDataType,
+  ): UnvalidFieldType | undefined => unvalidFlds.find((field) => field.fieldName === fldName);
+
+  /**
+   * Генерирует поля для группы 'ФИО'
+   * @param label - имя поля для пользователя
+   * @param fldName - имя поля
+   * @param required - флаг, указывающий, является ли поле обязательным для заполнения
+   * @param maxLength - максимально допустимое количество символов в поле
+   * @param format - флаг, указывающий на необходимость форматировать значение методом {@link formatNameToRightTemplate}
+   * @returns поле
+   */
+  const renderGroupContent = React.useCallback(
+    (
+      label: string,
+      fldName: keyof PersonEntityDataType,
+      maxLength: number,
+      required = true,
+      format = true,
+    ): JSX.Element => (
+      <TextBox
+        key={fldName}
+        label={label}
+        maxLength={maxLength}
+        value={data[fldName as keyof PersonEntityDataType]?.toString()}
+        isValid={getValidationErrorByFieldName(unvalidFields, fldName) ? false : true}
+        validationError={getValidationErrorByFieldName(unvalidFields, fldName)}
+        onValueChanged={(e) =>
+          dispatch(
+            setData({
+              value: format ? formatNameToRightTemplate(e.value) : e.value,
+              fieldName: fldName,
+            }),
+          )
+        }>
+        <Validator
+          onValidated={(validatedInfo) => {
+            handleValidate(validatedInfo, fldName);
+          }}>
+          {required && <RequiredRule message={'Заполните поле'} />}
+          <CustomRule
+            validationCallback={(e: any) =>
+              isFieldValid(fldName, format ? formatNameToRightTemplate(e.value) : e.value)
+            }
+            message="Используйте символы русского алфавита"
+          />
+        </Validator>
+      </TextBox>
+    ),
+    [data, unvalidFields],
+  );
+  /**
+   * Возвращает поля формы
+   */
   const renderContent = React.useCallback(
     (status: FetchingStatus): JSX.Element => {
       switch (status) {
@@ -53,84 +219,115 @@ const PersonEditForm: React.FC<PersonEditFormType> = ({ onUpdatingSuccess }) => 
             <div
               className="form-container"
               style={{ paddingTop: 20, paddingLeft: 20, paddingRight: 20 }}>
-              <Form colCount={2} id="form">
+              <Form showRequiredMark colCount={2} id="form">
                 <GroupItem caption={'ФИО'}>
-                  <TextBox
-                    label="Имя"
-                    value={data.firstName}
-                    onValueChanged={(e) =>
-                      dispatch(setData({ value: e.value, fieldName: 'firstName' }))
-                    }
-                  />
-                  <TextBox
-                    label="Фамилия"
-                    value={data.lastName}
-                    onValueChanged={(e) =>
-                      dispatch(setData({ value: e.value, fieldName: 'lastName' }))
-                    }
-                  />
-                  <TextBox
-                    label="Отчество"
-                    value={data.middleName}
-                    onValueChanged={(e) =>
-                      dispatch(setData({ value: e.value, fieldName: 'middleName' }))
-                    }
-                  />
+                  {[
+                    {
+                      fldName: 'firstName' as keyof PersonEntityDataType,
+                      label: 'Имя',
+                      required: true,
+                    },
+                    {
+                      fldName: 'lastName' as keyof PersonEntityDataType,
+                      label: 'Фамилия',
+                      required: true,
+                    },
+                    {
+                      fldName: 'middleName' as keyof PersonEntityDataType,
+                      label: 'Отчество',
+                      required: false,
+                    },
+                  ].map((value) =>
+                    renderGroupContent(value.label, value.fldName, 14, value.required),
+                  )}
                 </GroupItem>
                 <GroupItem caption={'Контакты'}>
-                  <TextBox
-                    label="Адрес"
-                    value={data.address}
-                    onValueChanged={(e) =>
-                      dispatch(setData({ value: e.value, fieldName: 'address' }))
-                    }
-                  />
-                  <TextBox
-                    label="Место рождения"
-                    value={data.birthPlace}
-                    onValueChanged={(e) =>
-                      dispatch(setData({ value: e.value, fieldName: 'birthPlace' }))
-                    }
-                  />
-                  <TextBox
-                    label="Место жительства"
-                    value={data.livePlace}
-                    onValueChanged={(e) =>
-                      dispatch(setData({ value: e.value, fieldName: 'livePlace' }))
-                    }
-                  />
-                  <TextBox
-                    label="Адрес регистрации"
-                    value={data.regPlace}
-                    onValueChanged={(e) =>
-                      dispatch(setData({ value: e.value, fieldName: 'regPlace' }))
-                    }
-                  />
+                  {[
+                    {
+                      fldName: 'address' as keyof PersonEntityDataType,
+                      label: 'Адрес',
+                      required: false,
+                    },
+                    {
+                      fldName: 'birthPlace' as keyof PersonEntityDataType,
+                      label: 'Место рождения',
+                      required: false,
+                    },
+                    {
+                      fldName: 'livePlace' as keyof PersonEntityDataType,
+                      label: 'Место жительства',
+                      required: false,
+                    },
+                    {
+                      fldName: 'regPlace' as keyof PersonEntityDataType,
+                      label: 'Адрес регистрации',
+                      required: false,
+                    },
+                  ].map((value) =>
+                    renderGroupContent(value.label, value.fldName, 50, value.required, false),
+                  )}
                   <TextBox
                     label="Телефон"
                     value={data.phone}
+                    isValid={getValidationErrorByFieldName(unvalidFields, 'phone') ? false : true}
+                    validationError={getValidationErrorByFieldName(unvalidFields, 'phone')}
                     onValueChanged={(e) => {
                       dispatch(setData({ value: e.value, fieldName: 'phone' }));
                     }}
                     mask="+375(XX)000-00-00"
-                    maskRules={{ X: /[1-9]/ }}
-                  />
+                    maskRules={{ X: /[1-9]/ }}>
+                    <Validator
+                      onValidated={(validatedInfo) => {
+                        handleValidate(validatedInfo, 'phone');
+                      }}>
+                      <CustomRule
+                        validationCallback={(e: any) =>
+                          isFieldValid('phone', formatNameToRightTemplate(e.value))
+                        }
+                        message="Используйте символы русского алфавита"
+                      />
+                    </Validator>
+                  </TextBox>
                 </GroupItem>
                 <GroupItem caption={'Дополнительные сведения'}>
                   <DateBox
                     label="Дата рождения"
                     width="100%"
+                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18))}
                     value={data.birthDate}
+                    isValid={
+                      getValidationErrorByFieldName(unvalidFields, 'birthDate') ? false : true
+                    }
+                    validationError={getValidationErrorByFieldName(unvalidFields, 'birthDate')}
                     onValueChanged={(e) =>
                       dispatch(setData({ value: e.value, fieldName: 'birthDate' }))
-                    }
-                  />
+                    }>
+                    <Validator
+                      onValidated={(validatedInfo) => {
+                        console.log(
+                          new Date(new Date().setFullYear(new Date().getFullYear() - 18)),
+                        );
+                        handleValidate(validatedInfo, 'birthDate');
+                      }}>
+                      <RequiredRule message={'Заполните поле'} />
+                      <RangeRule
+                        message={'Возраст должен быть не менее 18 лет'}
+                        max={new Date(
+                          new Date().setFullYear(new Date().getFullYear() - 18),
+                        ).toLocaleDateString()}
+                      />
+                    </Validator>
+                  </DateBox>
                   <SelectBox
                     label="Образование"
                     items={education}
                     value={data.education}
                     displayExpr="name"
                     valueExpr="name"
+                    isValid={
+                      getValidationErrorByFieldName(unvalidFields, 'education') ? false : true
+                    }
+                    validationError={getValidationErrorByFieldName(unvalidFields, 'education')}
                     onValueChanged={(e) =>
                       dispatch(setData({ value: e.value, fieldName: 'education' }))
                     }
@@ -141,34 +338,64 @@ const PersonEditForm: React.FC<PersonEditFormType> = ({ onUpdatingSuccess }) => 
                     items={maritalState}
                     displayExpr="name"
                     valueExpr="id"
+                    isValid={
+                      getValidationErrorByFieldName(unvalidFields, 'maritalState') ? false : true
+                    }
+                    validationError={getValidationErrorByFieldName(unvalidFields, 'maritalState')}
                     onValueChanged={(e) =>
                       dispatch(setData({ value: e.value, fieldName: 'maritalState' }))
+                    }>
+                    <Validator
+                      onValidated={(validatedInfo) => {
+                        handleValidate(validatedInfo, 'maritalState');
+                      }}>
+                      <RequiredRule message={'Выберите значение'} />
+                    </Validator>
+                  </SelectBox>
+                  {[
+                    {
+                      fldName: 'citizenship' as keyof PersonEntityDataType,
+                      label: 'Гражданство',
+                      maxLength: 42,
+                    },
+                    {
+                      fldName: 'nationality' as keyof PersonEntityDataType,
+                      label: 'Национальность',
+                      maxLength: 20,
+                    },
+                  ].map((value) => {
+                    {
+                      return renderGroupContent(
+                        value.label,
+                        value.fldName,
+                        value.maxLength,
+                        false,
+                        false,
+                      );
                     }
-                  />
-                  <TextBox
-                    label="Гражданство"
-                    value={data.citizenship}
-                    onValueChanged={(e) =>
-                      dispatch(setData({ value: e.value, fieldName: 'citizenship' }))
-                    }
-                  />
-                  <TextBox
-                    label="Национальность"
-                    value={data.nationality}
-                    onValueChanged={(e) =>
-                      dispatch(setData({ value: e.value, fieldName: 'nationality' }))
-                    }
-                  />
+                  })}
                 </GroupItem>
                 <GroupItem caption="Описание">
                   <TextArea
                     label="Комментарии"
                     height={90}
+                    maxLength={255}
                     value={data.comment}
+                    isValid={getValidationErrorByFieldName(unvalidFields, 'comment') ? false : true}
+                    validationError={getValidationErrorByFieldName(unvalidFields, 'comment')}
                     onValueChanged={(e) =>
                       dispatch(setData({ value: e.value, fieldName: 'comment' }))
-                    }
-                  />
+                    }>
+                    <Validator
+                      onValidated={(validatedInfo) => {
+                        handleValidate(validatedInfo, 'comment');
+                      }}>
+                      <CustomRule
+                        validationCallback={(e: any) => isFieldValid('comment', e.value)}
+                        message="Используйте символы русского алфавита"
+                      />
+                    </Validator>
+                  </TextArea>
                 </GroupItem>
               </Form>
             </div>
@@ -179,35 +406,8 @@ const PersonEditForm: React.FC<PersonEditFormType> = ({ onUpdatingSuccess }) => 
           return <>Ошибка загрузки</>;
       }
     },
-    [data],
+    [data, unvalidFields],
   );
-
-  const handleClose = () => {
-    editPersonDataDiffers ? dispatch(setOpenedConfirmDialog(true)) : dispatch(setOpened(false));
-  };
-
-  const onClickYes = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    dispatch(setOpenedConfirmDialog(false));
-    dispatch(setOpened(false));
-    dispatch(setEditPersonDataDiffers(false));
-  };
-
-  const onSaveClick = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    dispatch(setOpenedOperationResultDialog(true));
-    await putQuery<PersonEntityDataType>('people', data)
-      .then((res) => {
-        if (res.status === 200) {
-          dispatch(setOperationResultFetchStatus(FetchingStatus.SUCCESS));
-          dispatch(setDataEqualsChangedData(res.data as PersonEntityDataType));
-        } else if (res.status === 203) {
-          dispatch(setOperationResultFetchStatus(FetchingStatus.VALIDATION_ERROR));
-          dispatch(setViolation(res.data as Violations));
-        }
-      })
-      .catch((err) => {
-        dispatch(setOperationResultFetchStatus(FetchingStatus.ERROR));
-      });
-  };
 
   return (
     <Dialog fullScreen open={opened} onClose={handleClose} TransitionComponent={Transition}>
@@ -230,7 +430,7 @@ const PersonEditForm: React.FC<PersonEditFormType> = ({ onUpdatingSuccess }) => 
           </Typography>
           <Button
             autoFocus
-            disabled={!editPersonDataDiffers && !validationError}
+            disabled={!editPersonDataDiffers || unvalidFields.length > 0}
             onClick={(e) => onSaveClick(e)}
             color="inherit">
             Сохранить

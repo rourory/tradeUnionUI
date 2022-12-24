@@ -5,6 +5,6 @@
  */
 export const formatNameToRightTemplate = (name: string): string => {
   let result = name.trim();
-  const firstSymbol = name.charAt(0);
+  const firstSymbol = result.charAt(0);
   return firstSymbol.toLocaleUpperCase() + result.slice(1, result.length).toLocaleLowerCase();
 };

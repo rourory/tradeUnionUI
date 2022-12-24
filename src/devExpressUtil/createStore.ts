@@ -56,12 +56,11 @@ export function createStore<T extends Entity>(table: string) {
       await fetchByIdQuery<T>(table, key)
         .then(async (res) => {
           const returnedData: T = updateValuesOfEntityDataTypeObject(res.data, values);
-
           await putQuery<T>(table, returnedData)
             .then((res) => {
               setTokenToLocalStorage(res.headers.authorization || '');
             })
-            .catch((err) => console.log(123, err));
+            .catch((err) => console.log(err));
         })
         .catch((err) => console.log(err));
     },
