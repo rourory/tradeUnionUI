@@ -37,6 +37,8 @@ import { isFieldValid } from '../../../redux/validation/fieldValidator';
 import { ValidatedEvent } from 'devextreme/ui/validator';
 import { UnvalidFieldType } from '../../../redux/types/edit-person-form-slice-types';
 import { formatNameToRightTemplate } from '../../../redux/utils/stringOperations';
+import { isAnyFieldEmpty } from './isAnyFieldEmpty';
+import { getMaxDateAs18YearsAgo } from '../../../redux/utils/getMaxDate';
 
 type PersonEditFormType = {
   onUpdatingSuccess: () => void;
@@ -54,12 +56,8 @@ const PersonEditForm: React.FC<PersonEditFormType> = ({ onUpdatingSuccess }) => 
     useSelector(editPersonFormSelector);
   const { maritalState, education } = useSelector(classificationsSelector);
 
-  React.useEffect(() => {
-    console.log(unvalidFields);
-  }, [unvalidFields]);
-
   /**
-   * Сопровождает валидацию всех подписавшихся валидаторов
+   * Сопровождает работу всех подписавшихся валидаторов
    */
   const handleValidate = React.useCallback(
     (ev: ValidatedEvent, fieldName: keyof PersonEntityDataType) => {
@@ -102,25 +100,6 @@ const PersonEditForm: React.FC<PersonEditFormType> = ({ onUpdatingSuccess }) => 
   };
 
   /**
-   * Проверяет все пустые значения полей формы
-   * @returns true, если хотя бы одно поле является пустым
-   */
-  const isAnyFieldEmpty = (
-    personData: PersonEntityDataType,
-    reqFlds: Array<keyof PersonEntityDataType>,
-  ): boolean => {
-    for (const value of reqFlds) {
-      if (
-        personData[value as keyof PersonEntityDataType] === '' ||
-        personData[value as keyof PersonEntityDataType] === null ||
-        personData[value as keyof PersonEntityDataType] === 0
-      )
-        return true;
-    }
-    return false;
-  };
-
-  /**
    * Обрабатывает нажатие на кнопку "Сохранить"
    * Перед сохранением вызывает метод {@link isAnyFieldEmpty}
    * для проверки пустых полей.
@@ -131,7 +110,6 @@ const PersonEditForm: React.FC<PersonEditFormType> = ({ onUpdatingSuccess }) => 
       await putQuery<PersonEntityDataType>('people', data)
         .then((res) => {
           if (res.status === 200) {
-            console.log('Sucssesful responce: ', res.data);
             dispatch(setOperationResultFetchStatus(FetchingStatus.SUCCESS));
             dispatch(setDataEqualsChangedData(res.data as PersonEntityDataType));
           } else if (res.status === 203) {
@@ -293,7 +271,7 @@ const PersonEditForm: React.FC<PersonEditFormType> = ({ onUpdatingSuccess }) => 
                   <DateBox
                     label="Дата рождения"
                     width="100%"
-                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18))}
+                    max={getMaxDateAs18YearsAgo()}
                     value={data.birthDate}
                     isValid={
                       getValidationErrorByFieldName(unvalidFields, 'birthDate') ? false : true
@@ -304,17 +282,12 @@ const PersonEditForm: React.FC<PersonEditFormType> = ({ onUpdatingSuccess }) => 
                     }>
                     <Validator
                       onValidated={(validatedInfo) => {
-                        console.log(
-                          new Date(new Date().setFullYear(new Date().getFullYear() - 18)),
-                        );
                         handleValidate(validatedInfo, 'birthDate');
                       }}>
                       <RequiredRule message={'Заполните поле'} />
                       <RangeRule
                         message={'Возраст должен быть не менее 18 лет'}
-                        max={new Date(
-                          new Date().setFullYear(new Date().getFullYear() - 18),
-                        ).toLocaleDateString()}
+                        max={getMaxDateAs18YearsAgo().toLocaleDateString()}
                       />
                     </Validator>
                   </DateBox>

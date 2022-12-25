@@ -6,6 +6,8 @@ import DataGrid, {
   MasterDetail,
   Editing,
   Scrolling,
+  CustomRule,
+  RequiredRule,
 } from 'devextreme-react/data-grid';
 import PersonDataDetails from '../PersonDataDetails';
 import DataSource from 'devextreme/data/data_source';
@@ -26,11 +28,15 @@ import PersonEditForm from '../../EditForms/Person';
 import { PersonEntityDataType } from '../../../@types/personTypes';
 import { fetchClassificationsData, setHasErrors } from '../../../redux/slices/classification-slice';
 import { userSelector } from '../../../redux/slices/user-slice';
+import { isFieldValid } from '../../../redux/validation/fieldValidator';
+import { getMaxDateAs18YearsAgo } from '../../../redux/utils/getMaxDate';
+import { setDataChanges } from '../../../redux/slices/person-datagrid-editing-slice';
 
 const PersonData: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [dataGridHeight, setDataGridHeight] = React.useState(window.innerHeight - 88);
   const { user } = useSelector(userSelector);
+  const rows = React.useMemo(() => new DataSource(createStore<PersonEntityDataType>('people')), []);
 
   /**
    * Метод позволяет ограничивать количество открытых вкладок дополнительной информации до одной
@@ -57,8 +63,6 @@ const PersonData: React.FC = () => {
     }
   };
 
-  const rows = React.useMemo(() => new DataSource(createStore<PersonEntityDataType>('people')), []);
-
   /**
    * При рендере необходимо повесить на window listener, который будет определять размеры контетна внутри MainLayout (в данном случае компонента DataGrid)
    * и запрашивает у сервера информацию о классификаторах, используемых для редактирования данных в DataGrid
@@ -68,9 +72,24 @@ const PersonData: React.FC = () => {
     dispatch(fetchClassificationsData());
   }, []);
 
+  const onChangesChangeHandle = (
+    changes: Array<{ data: PersonEntityDataType; key: number; type: string }>,
+    data: DataSource<any, any>,
+  ) => {
+    if (changes.length > 0) {
+      dispatch(setDataChanges({ changes: changes, rows: data.items() }));
+    }
+  };
+
   return (
     <>
       <DataGrid
+        onRowValidating={(e) => console.log('[DATA GRID] onRowVAlidating: ', e)}
+        focusedRowEnabled
+        autoNavigateToFocusedRow={true}
+        // focusedRowIndex={2}
+        // selectedRowKeys={[]}
+        highlightChanges
         className={'dx-card wide-card'}
         dataSource={rows}
         allowColumnReordering
@@ -87,9 +106,12 @@ const PersonData: React.FC = () => {
         }}>
         {user?.role === 'ROLE_ADMIN' && (
           <Editing
-            mode="row"
-            allowUpdating={true}
-            allowDeleting={true}
+            onChangesChange={(e) => onChangesChangeHandle(e, rows)}
+            // onEditRowKeyChange={(value) => console.log('[EDITING] onEditRowKeyChange: ', value)}
+            mode="batch"
+            allowUpdating
+            allowDeleting
+            allowAdding
             confirmDelete
             useIcons={true}
           />
@@ -105,20 +127,39 @@ const PersonData: React.FC = () => {
             }}
           />
         )}
-        <Column dataField={'lastName'} caption={'Фамилия'} dataType="string" hidingPriority={1} />
-        <Column dataField={'firstName'} caption={'Имя'} dataType="string" hidingPriority={2} />
         <Column
-          dataField={'middleName'}
-          caption={'Отчество'}
+          showEditorAlways={true}
+          dataField={'lastName'}
+          caption={'Фамилия'}
           dataType="string"
-          hidingPriority={3}
-        />
+          hidingPriority={1}>
+          <CustomRule
+            validationCallback={(e: any) => isFieldValid('lastName', e.value)}
+            message={'Используейте символы русского алфавита'}
+          />
+          <RequiredRule message={'Заполните поле'} />
+        </Column>
+        <Column dataField={'firstName'} caption={'Имя'} dataType="string" hidingPriority={2}>
+          <CustomRule
+            validationCallback={(e: any) => isFieldValid('firstName', e.value)}
+            message={'Используейте символы русского алфавита'}
+          />
+          <RequiredRule message={'Заполните поле'} />
+        </Column>
+        <Column dataField={'middleName'} caption={'Отчество'} dataType="string" hidingPriority={3}>
+          <CustomRule
+            validationCallback={(e: any) => isFieldValid('middleName', e.value)}
+            message={'Используейте символы русского алфавита'}
+          />
+        </Column>
         <Column
           dataField={'birthDate'}
+          editorOptions={{ max: getMaxDateAs18YearsAgo() }}
           caption={'Дата рождения'}
           dataType="date"
-          hidingPriority={4}
-        />
+          hidingPriority={4}>
+          <RequiredRule message={'Заполните поле'} />
+        </Column>
 
         <SearchPanel placeholder={'Поиск...'} visible={true} />
         <FilterRow visible={true} />

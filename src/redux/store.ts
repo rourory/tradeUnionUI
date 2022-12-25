@@ -11,6 +11,7 @@ import user from './slices/user-slice';
 import signUpForm from './slices/localStates/signUp-slice';
 import notificator from './slices/notificator-slice';
 import mainContentRender from './slices/localStates/main-content-rendered-slice';
+import peopleDatagridEditing from './slices/person-datagrid-editing-slice';
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +27,7 @@ export const store = configureStore({
     signUpForm,
     notificator,
     mainContentRender,
+    peopleDatagridEditing,
   },
 });
 
