@@ -4,10 +4,10 @@ import DataGrid, {
   FilterRow,
   GroupPanel,
   MasterDetail,
-  Editing,
   Scrolling,
   CustomRule,
   RequiredRule,
+  Editing,
 } from 'devextreme-react/data-grid';
 import PersonDataDetails from '../PersonDataDetails';
 import DataSource from 'devextreme/data/data_source';
@@ -30,12 +30,19 @@ import { fetchClassificationsData, setHasErrors } from '../../../redux/slices/cl
 import { userSelector } from '../../../redux/slices/user-slice';
 import { isFieldValid } from '../../../redux/validation/fieldValidator';
 import { getMaxDateAs18YearsAgo } from '../../../redux/utils/getMaxDate';
-import { setDataChanges } from '../../../redux/slices/person-datagrid-editing-slice';
+import {
+  setChanges,
+  setDataChanges,
+  updateRowNumbers,
+} from '../../../redux/slices/person-datagrid-editing-slice';
+import { PersonDataGridEditingChange } from '../../../redux/types/person-datagrid-editing-slice-types';
+import PersonDatagridValidationErrorTreeView from './PersonValidationErrorTreeView';
 
 const PersonData: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const [dataGridHeight, setDataGridHeight] = React.useState(window.innerHeight - 88);
+  const [dataGridHeight, setDataGridHeight] = React.useState(window.innerHeight - 188);
   const { user } = useSelector(userSelector);
+  // const { changes } = useSelector(peopleDatagridEditingSelector);
   const rows = React.useMemo(() => new DataSource(createStore<PersonEntityDataType>('people')), []);
 
   /**
@@ -68,36 +75,42 @@ const PersonData: React.FC = () => {
    * и запрашивает у сервера информацию о классификаторах, используемых для редактирования данных в DataGrid
    */
   React.useEffect(() => {
-    window.addEventListener('resize', () => setDataGridHeight(window.innerHeight - 88));
+    window.addEventListener('resize', () => setDataGridHeight(window.innerHeight - 188));
     dispatch(fetchClassificationsData());
   }, []);
 
-  const onChangesChangeHandle = (
-    changes: Array<{ data: PersonEntityDataType; key: number; type: string }>,
-    data: DataSource<any, any>,
-  ) => {
-    if (changes.length > 0) {
-      dispatch(setDataChanges({ changes: changes, rows: data.items() }));
-    }
-  };
+  const onChangesChangeHandle = React.useCallback(
+    (changes: Array<PersonDataGridEditingChange>, data: DataSource<any, any>) => {
+      if (changes.length > 0) {
+        dispatch(setChanges(changes));
+        dispatch(setDataChanges({ changes: changes, rows: data.items() }));
+      }
+    },
+    [],
+  );
 
   return (
     <>
       <DataGrid
-        onRowValidating={(e) => console.log('[DATA GRID] onRowVAlidating: ', e)}
-        focusedRowEnabled
-        autoNavigateToFocusedRow={true}
-        // focusedRowIndex={2}
-        // selectedRowKeys={[]}
+        // editing={{
+        //   mode: 'batch',
+        //   allowUpdating: true,
+        //   allowDeleting: true,
+        //   allowAdding: true,
+        //   confirmDelete: true,
+        //   useIcons: true,
+        //   changes: [{ data: { firstName: 'dadad', lastName: '213233' }, type: 'update', key: 28 }],
+        // }}
         highlightChanges
         className={'dx-card wide-card'}
         dataSource={rows}
         allowColumnReordering
         allowColumnResizing
-        hoverStateEnabled
         onRowExpanding={rowExpanding}
         showBorders={true}
+        repaintChangesOnly
         height={dataGridHeight}
+        onEditingStart={(e) => console.log(e)}
         onCellDblClick={(e) => openEditPersonDialog(e)}
         loadPanel={{
           indicatorSrc: '/Loading.svg',
@@ -106,14 +119,16 @@ const PersonData: React.FC = () => {
         }}>
         {user?.role === 'ROLE_ADMIN' && (
           <Editing
-            onChangesChange={(e) => onChangesChangeHandle(e, rows)}
-            // onEditRowKeyChange={(value) => console.log('[EDITING] onEditRowKeyChange: ', value)}
+            onChangesChange={(e) => {
+              onChangesChangeHandle(e, rows);
+            }}
             mode="batch"
             allowUpdating
             allowDeleting
             allowAdding
             confirmDelete
             useIcons={true}
+            texts={{ editRow: (e: any) => console.log(e) }}
           />
         )}
 
@@ -128,6 +143,9 @@ const PersonData: React.FC = () => {
           />
         )}
         <Column
+          onSelectedFilterOperationChange={(e) => {
+            console.log(123);
+          }}
           showEditorAlways={true}
           dataField={'lastName'}
           caption={'Фамилия'}
@@ -161,11 +179,16 @@ const PersonData: React.FC = () => {
           <RequiredRule message={'Заполните поле'} />
         </Column>
 
-        <SearchPanel placeholder={'Поиск...'} visible={true} />
+        <SearchPanel
+          onTextChange={() => dispatch(updateRowNumbers(rows.items()))}
+          placeholder={'Поиск...'}
+          visible={true}
+        />
         <FilterRow visible={true} />
         <GroupPanel emptyPanelText="Переместите сюда колонки для группировки" visible={true} />
         <Scrolling mode="virtual" />
       </DataGrid>
+      <PersonDatagridValidationErrorTreeView />
     </>
   );
 };

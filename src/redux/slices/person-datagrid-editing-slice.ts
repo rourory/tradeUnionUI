@@ -5,11 +5,14 @@ import { RootState } from '../store';
 import {
   PersonDatagridEditingBrokenRow,
   PersonDatagridEditingBrokenRows,
+  PersonDataGridEditingChange,
   PersonDatagridEditingChanges,
 } from '../types/person-datagrid-editing-slice-types';
 
 const initialState: PersonDatagridEditingBrokenRows = {
   brokenRows: [],
+  changes: [],
+  focusedRow: undefined,
 };
 
 const peopleDatagridEditingSlice = createSlice({
@@ -31,19 +34,24 @@ const peopleDatagridEditingSlice = createSlice({
           ) {
             //Проверяем, нет ли уже объекта с этим ключем в массиве brokenRows
             const indexIfExists = brokenRows.findIndex(
-              (brokenRow) => brokenRow.keyOfRow === action.payload.changes[i].key,
+              (brokenRow) => brokenRow.key === action.payload.changes[i].key,
             );
-
             //Если уже есть, то нужно добавить в существующий
             if (indexIfExists >= 0) {
               // brokenRows[indexIfExists];
+              brokenRows[indexIfExists].values.push({
+                columnName: key,
+                value:
+                  action.payload.changes[i].data[key as keyof PersonEntityDataType]?.toString() ||
+                  '',
+              });
               //Если нет, то можно добавить новый
             } else {
-              const rowNumber: number | undefined = action.payload.rows.findIndex(
-                (item) => item.id === action.payload.changes[i].key || undefined,
+              const rowNumber: number = action.payload.rows.findIndex(
+                (item) => item.id === action.payload.changes[i].key,
               );
               brokenRows.push({
-                keyOfRow: action.payload.changes[i].key,
+                key: action.payload.changes[i].key,
                 rowNumber: rowNumber,
                 values: [
                   {
@@ -59,11 +67,27 @@ const peopleDatagridEditingSlice = createSlice({
           }
         }
       }
-      console.log(brokenRows);
+      state.brokenRows = brokenRows;
+    },
+    updateRowNumbers(state, action: PayloadAction<PersonEntityDataType[]>) {
+      if (state.brokenRows.length > 0) {
+        for (let i = 0; i < state.brokenRows.length; i++) {
+          state.brokenRows[i].rowNumber = action.payload.findIndex(
+            (item) => item.id === state.brokenRows[i].key,
+          );
+        }
+      }
+    },
+    setChanges(state, action: PayloadAction<Array<PersonDataGridEditingChange>>) {
+      state.changes = action.payload;
+    },
+    setFocusedRow(state, action: PayloadAction<number>) {
+      state.focusedRow = action.payload;
     },
   },
 });
 
 export default peopleDatagridEditingSlice.reducer;
-export const personDetailsSelector = (state: RootState) => state.peopleDatagridEditing;
-export const { setDataChanges } = peopleDatagridEditingSlice.actions;
+export const peopleDatagridEditingSelector = (state: RootState) => state.peopleDatagridEditing;
+export const { setDataChanges, updateRowNumbers, setChanges, setFocusedRow } =
+  peopleDatagridEditingSlice.actions;

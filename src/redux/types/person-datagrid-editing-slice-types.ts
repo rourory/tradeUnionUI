@@ -1,12 +1,13 @@
-import DataSource from 'devextreme/data/data_source';
 import { PersonEntityDataType } from './../../@types/personTypes';
 export type PersonDatagridEditingBrokenRows = {
   brokenRows: PersonDatagridEditingBrokenRow[];
+  changes: PersonDataGridEditingChange[];
+  focusedRow: number | undefined;
 };
 
 export type PersonDatagridEditingBrokenRow = {
-  rowNumber: number | undefined;
-  keyOfRow: number;
+  rowNumber: number;
+  key: number;
   values: PersonDatagridEditingBrokenValue[];
 };
 
